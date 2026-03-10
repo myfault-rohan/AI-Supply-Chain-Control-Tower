@@ -1,0 +1,979 @@
+﻿python : WARNING: Using 
+incubator modules: 
+jdk.incubator.vector
+At line:1 char:1
++ python spark_processing/s
+park_streaming_processor.py
+ > spark_debug_4. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (WAR  
+  NING: Using ...ncubato   
+ r.vector:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+26/03/08 23:35:11 WARN 
+Shell: Did not find 
+winutils.exe: java.io.FileN
+otFoundException: java.io.F
+ileNotFoundException: 
+HADOOP_HOME and 
+hadoop.home.dir are unset. 
+-see https://cwiki.apache.o
+rg/confluence/display/HADOO
+P2/WindowsProblems
+26/03/08 23:35:11 WARN 
+NativeCodeLoader: Unable 
+to load native-hadoop 
+library for your 
+platform... using 
+builtin-java classes where 
+applicable
+Using Spark's default 
+log4j profile: org/apache/s
+park/log4j2-defaults.proper
+ties
+Setting default log level 
+to "WARN".
+To adjust logging level 
+use 
+sc.setLogLevel(newLevel). 
+For SparkR, use 
+setLogLevel(newLevel).
+26/03/08 23:35:13 ERROR 
+SparkContext: Error 
+initializing SparkContext.
+java.lang.RuntimeException:
+ java.io.FileNotFoundExcept
+ion: java.io.FileNotFoundEx
+ception: HADOOP_HOME and 
+hadoop.home.dir are unset. 
+-see https://cwiki.apache.o
+rg/confluence/display/HADOO
+P2/WindowsProblems
+	at org.apache.hadoop.util.
+Shell.getWinUtilsPath(Shell
+.java:789)
+	at org.apache.hadoop.util.
+Shell.getSetPermissionComma
+nd(Shell.java:298)
+	at org.apache.hadoop.fs.Fi
+leUtil.chmod(FileUtil.java:
+1305)
+	at org.apache.hadoop.fs.Fi
+leUtil.chmod(FileUtil.java:
+1291)
+	at org.apache.spark.util.U
+tils$.fetchFile(Utils.scala
+:432)
+	at org.apache.spark.execut
+or.Executor.$anonfun$update
+Dependencies$14(Executor.sc
+ala:1300)
+	at org.apache.spark.execut
+or.Executor.$anonfun$update
+Dependencies$14$adapted(Exe
+cutor.scala:1291)
+	at scala.collection.Iterab
+leOnceOps.foreach(IterableO
+nce.scala:630)
+	at scala.collection.Iterab
+leOnceOps.foreach$(Iterable
+Once.scala:628)
+	at scala.collection.Abstra
+ctIterable.foreach(Iterable
+.scala:936)
+	at scala.collection.Iterab
+leOps$WithFilter.foreach(It
+erable.scala:906)
+	at org.apache.spark.execut
+or.Executor.updateDependenc
+ies(Executor.scala:1291)
+	at org.apache.spark.execut
+or.Executor.<init>(Executor
+.scala:392)
+	at org.apache.spark.schedu
+ler.local.LocalEndpoint.<in
+it>(LocalSchedulerBackend.s
+cala:66)
+	at org.apache.spark.schedu
+ler.local.LocalSchedulerBac
+kend.start(LocalSchedulerBa
+ckend.scala:136)
+	at org.apache.spark.schedu
+ler.TaskSchedulerImpl.start
+(TaskSchedulerImpl.scala:22
+9)
+	at org.apache.spark.SparkC
+ontext.<init>(SparkContext.
+scala:629)
+	at org.apache.spark.api.ja
+va.JavaSparkContext.<init>(
+JavaSparkContext.scala:59)
+	at java.base/jdk.internal.
+reflect.NativeConstructorAc
+cessorImpl.newInstance0(Nat
+ive Method)
+	at java.base/jdk.internal.
+reflect.NativeConstructorAc
+cessorImpl.newInstance(Nati
+veConstructorAccessorImpl.j
+ava:77)
+	at java.base/jdk.internal.
+reflect.DelegatingConstruct
+orAccessorImpl.newInstance(
+DelegatingConstructorAccess
+orImpl.java:45)
+	at java.base/java.lang.ref
+lect.Constructor.newInstanc
+eWithCaller(Constructor.jav
+a:500)
+	at java.base/java.lang.ref
+lect.Constructor.newInstanc
+e(Constructor.java:481)
+	at py4j.reflection.MethodI
+nvoker.invoke(MethodInvoker
+.java:247)
+	at py4j.reflection.Reflect
+ionEngine.invoke(Reflection
+Engine.java:374)
+	at py4j.Gateway.invoke(Gat
+eway.java:238)
+	at py4j.commands.Construct
+orCommand.invokeConstructor
+(ConstructorCommand.java:80
+)
+	at py4j.commands.Construct
+orCommand.execute(Construct
+orCommand.java:69)
+	at py4j.ClientServerConnec
+tion.waitForCommands(Client
+ServerConnection.java:184)
+	at py4j.ClientServerConnec
+tion.run(ClientServerConnec
+tion.java:108)
+	at java.base/java.lang.Thr
+ead.run(Thread.java:840)
+Caused by: java.io.FileNotF
+oundException: java.io.File
+NotFoundException: 
+HADOOP_HOME and 
+hadoop.home.dir are unset. 
+-see https://cwiki.apache.o
+rg/confluence/display/HADOO
+P2/WindowsProblems
+	at org.apache.hadoop.util.
+Shell.fileNotFoundException
+(Shell.java:601)
+	at org.apache.hadoop.util.
+Shell.getHadoopHomeDir(Shel
+l.java:622)
+	at org.apache.hadoop.util.
+Shell.getQualifiedBin(Shell
+.java:645)
+	at org.apache.hadoop.util.
+Shell.<clinit>(Shell.java:7
+42)
+	at org.apache.hadoop.util.
+StringUtils.<clinit>(String
+Utils.java:80)
+	at org.apache.hadoop.conf.
+Configuration.getTimeDurati
+onHelper(Configuration.java
+:1954)
+	at org.apache.hadoop.conf.
+Configuration.getTimeDurati
+on(Configuration.java:1912)
+	at org.apache.hadoop.conf.
+Configuration.getTimeDurati
+on(Configuration.java:1885)
+	at org.apache.hadoop.util.
+ShutdownHookManager.getShut
+downTimeout(ShutdownHookMan
+ager.java:183)
+	at org.apache.hadoop.util.
+ShutdownHookManager$HookEnt
+ry.<init>(ShutdownHookManag
+er.java:207)
+	at org.apache.hadoop.util.
+ShutdownHookManager.addShut
+downHook(ShutdownHookManage
+r.java:304)
+	at org.apache.spark.util.S
+parkShutdownHookManager.$an
+onfun$install$1(ShutdownHoo
+kManager.scala:194)
+	at scala.runtime.java8.JFu
+nction0$mcV$sp.apply(JFunct
+ion0$mcV$sp.scala:18)
+	at scala.Option.fold(Optio
+n.scala:263)
+	at org.apache.spark.util.S
+parkShutdownHookManager.ins
+tall(ShutdownHookManager.sc
+ala:195)
+	at org.apache.spark.util.S
+hutdownHookManager$.shutdow
+nHooks$lzycompute(ShutdownH
+ookManager.scala:55)
+	at org.apache.spark.util.S
+hutdownHookManager$.shutdow
+nHooks(ShutdownHookManager.
+scala:53)
+	at org.apache.spark.util.S
+hutdownHookManager$.addShut
+downHook(ShutdownHookManage
+r.scala:159)
+	at org.apache.spark.util.S
+hutdownHookManager$.<clinit
+>(ShutdownHookManager.scala
+:63)
+	at org.apache.spark.util.U
+tils$.createTempDir(Utils.s
+cala:249)
+	at org.apache.spark.util.S
+parkFileUtils.createTempDir
+(SparkFileUtils.scala:125)
+	at org.apache.spark.util.S
+parkFileUtils.createTempDir
+$(SparkFileUtils.scala:124)
+	at org.apache.spark.util.U
+tils$.createTempDir(Utils.s
+cala:97)
+	at org.apache.spark.deploy
+.SparkSubmit.prepareSubmitE
+nvironment(SparkSubmit.scal
+a:378)
+	at org.apache.spark.deploy
+.SparkSubmit.org$apache$spa
+rk$deploy$SparkSubmit$$runM
+ain(SparkSubmit.scala:962)
+	at org.apache.spark.deploy
+.SparkSubmit.doRunMain$1(Sp
+arkSubmit.scala:203)
+	at org.apache.spark.deploy
+.SparkSubmit.submit(SparkSu
+bmit.scala:226)
+	at org.apache.spark.deploy
+.SparkSubmit.doSubmit(Spark
+Submit.scala:95)
+	at org.apache.spark.deploy
+.SparkSubmit$$anon$2.doSubm
+it(SparkSubmit.scala:1168)
+	at org.apache.spark.deploy
+.SparkSubmit$.main(SparkSub
+mit.scala:1177)
+	at org.apache.spark.deploy
+.SparkSubmit.main(SparkSubm
+it.scala)
+Caused by: java.io.FileNotF
+oundException: HADOOP_HOME 
+and hadoop.home.dir are 
+unset.
+	at org.apache.hadoop.util.
+Shell.checkHadoopHomeInner(
+Shell.java:521)
+	at org.apache.hadoop.util.
+Shell.checkHadoopHome(Shell
+.java:492)
+	at org.apache.hadoop.util.
+Shell.<clinit>(Shell.java:5
+69)
+	... 27 more
+26/03/08 23:35:13 ERROR 
+Utils: Uncaught exception 
+in thread Thread-3
+java.lang.NullPointerExcept
+ion: Cannot invoke "org.apa
+che.spark.rpc.RpcEndpointRe
+f.ask(Object, 
+scala.reflect.ClassTag)" 
+because the return value 
+of "org.apache.spark.schedu
+ler.local.LocalSchedulerBac
+kend.localEndpoint()" is 
+null
+	at org.apache.spark.schedu
+ler.local.LocalSchedulerBac
+kend.org$apache$spark$sched
+uler$local$LocalSchedulerBa
+ckend$$stop(LocalSchedulerB
+ackend.scala:178)
+	at org.apache.spark.schedu
+ler.local.LocalSchedulerBac
+kend.stop(LocalSchedulerBac
+kend.scala:149)
+	at org.apache.spark.schedu
+ler.SchedulerBackend.stop(S
+chedulerBackend.scala:34)
+	at org.apache.spark.schedu
+ler.SchedulerBackend.stop$(
+SchedulerBackend.scala:34)
+	at org.apache.spark.schedu
+ler.local.LocalSchedulerBac
+kend.stop(LocalSchedulerBac
+kend.scala:107)
+	at org.apache.spark.schedu
+ler.TaskSchedulerImpl.$anon
+fun$stop$2(TaskSchedulerImp
+l.scala:933)
+	at org.apache.spark.util.U
+tils$.tryLogNonFatalError(U
+tils.scala:1314)
+	at org.apache.spark.schedu
+ler.TaskSchedulerImpl.stop(
+TaskSchedulerImpl.scala:933
+)
+	at org.apache.spark.schedu
+ler.DAGScheduler.$anonfun$s
+top$4(DAGScheduler.scala:33
+10)
+	at org.apache.spark.util.U
+tils$.tryLogNonFatalError(U
+tils.scala:1314)
+	at org.apache.spark.schedu
+ler.DAGScheduler.stop(DAGSc
+heduler.scala:3310)
+	at org.apache.spark.SparkC
+ontext.$anonfun$stop$12(Spa
+rkContext.scala:2357)
+	at org.apache.spark.util.U
+tils$.tryLogNonFatalError(U
+tils.scala:1314)
+	at org.apache.spark.SparkC
+ontext.stop(SparkContext.sc
+ala:2357)
+	at org.apache.spark.SparkC
+ontext.stop(SparkContext.sc
+ala:2308)
+	at org.apache.spark.SparkC
+ontext.<init>(SparkContext.
+scala:740)
+	at org.apache.spark.api.ja
+va.JavaSparkContext.<init>(
+JavaSparkContext.scala:59)
+	at java.base/jdk.internal.
+reflect.NativeConstructorAc
+cessorImpl.newInstance0(Nat
+ive Method)
+	at java.base/jdk.internal.
+reflect.NativeConstructorAc
+cessorImpl.newInstance(Nati
+veConstructorAccessorImpl.j
+ava:77)
+	at java.base/jdk.internal.
+reflect.DelegatingConstruct
+orAccessorImpl.newInstance(
+DelegatingConstructorAccess
+orImpl.java:45)
+	at java.base/java.lang.ref
+lect.Constructor.newInstanc
+eWithCaller(Constructor.jav
+a:500)
+	at java.base/java.lang.ref
+lect.Constructor.newInstanc
+e(Constructor.java:481)
+	at py4j.reflection.MethodI
+nvoker.invoke(MethodInvoker
+.java:247)
+	at py4j.reflection.Reflect
+ionEngine.invoke(Reflection
+Engine.java:374)
+	at py4j.Gateway.invoke(Gat
+eway.java:238)
+	at py4j.commands.Construct
+orCommand.invokeConstructor
+(ConstructorCommand.java:80
+)
+	at py4j.commands.Construct
+orCommand.execute(Construct
+orCommand.java:69)
+	at py4j.ClientServerConnec
+tion.waitForCommands(Client
+ServerConnection.java:184)
+	at py4j.ClientServerConnec
+tion.run(ClientServerConnec
+tion.java:108)
+	at java.base/java.lang.Thr
+ead.run(Thread.java:840)
+26/03/08 23:35:13 WARN 
+MetricsSystem: Stopping a 
+MetricsSystem that is not 
+running
+Traceback (most recent 
+call last):
+  File "C:\Users\rohan\Desk
+top\AI-Supply-Chain-Control
+-Tower\spark_processing\spa
+rk_streaming_processor.py",
+ line 117, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\rohan\Desk
+top\AI-Supply-Chain-Control
+-Tower\spark_processing\spa
+rk_streaming_processor.py",
+ line 69, in main
+    spark = 
+create_spark_session()
+  File "C:\Users\rohan\Desk
+top\AI-Supply-Chain-Control
+-Tower\spark_processing\spa
+rk_streaming_processor.py",
+ line 31, in 
+create_spark_session
+    .getOrCreate()
+     ~~~~~~~~~~~^^
+  File "C:\Users\rohan\AppD
+ata\Roaming\Python\Python31
+4\site-packages\pyspark\sql
+\session.py", line 557, in 
+getOrCreate
+    sc = SparkContext.getOr
+Create(sparkConf)
+  File "C:\Users\rohan\AppD
+ata\Roaming\Python\Python31
+4\site-packages\pyspark\cor
+e\context.py", line 542, 
+in getOrCreate
+    SparkContext(conf=conf 
+or SparkConf())
+    ~~~~~~~~~~~~^^^^^^^^^^^
+^^^^^^^^^^^^^^^
+  File "C:\Users\rohan\AppD
+ata\Roaming\Python\Python31
+4\site-packages\pyspark\cor
+e\context.py", line 208, 
+in __init__
+    self._do_init(
+    ~~~~~~~~~~~~~^
+        master,
+        ^^^^^^^
+    ...<10 lines>...
+        
+memory_profiler_cls,
+        
+^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\rohan\AppD
+ata\Roaming\Python\Python31
+4\site-packages\pyspark\cor
+e\context.py", line 301, 
+in _do_init
+    self._jsc = jsc or self
+._initialize_context(self._
+conf._jconf)
+                       ~~~~
+~~~~~~~~~~~~~~~~~~~~^^^^^^^
+^^^^^^^^^^^^
+  File "C:\Users\rohan\AppD
+ata\Roaming\Python\Python31
+4\site-packages\pyspark\cor
+e\context.py", line 448, 
+in _initialize_context
+    return self._jvm.JavaSp
+arkContext(jconf)
+           ~~~~~~~~~~~~~~~~
+~~~~~~~~~~^^^^^^^
+  File "C:\Users\rohan\AppD
+ata\Roaming\Python\Python31
+4\site-packages\py4j\java_g
+ateway.py", line 1627, in 
+__call__
+    return_value = 
+get_return_value(
+        answer, 
+self._gateway_client, 
+None, self._fqn)
+  File "C:\Users\rohan\AppD
+ata\Roaming\Python\Python31
+4\site-packages\py4j\protoc
+ol.py", line 327, in 
+get_return_value
+    raise Py4JJavaError(
+        "An error occurred 
+while calling 
+{0}{1}{2}.\n".
+        format(target_id, 
+".", name), value)
+py4j.protocol.Py4JJavaError
+: An error occurred while 
+calling None.org.apache.spa
+rk.api.java.JavaSparkContex
+t.
+: java.lang.RuntimeExceptio
+n: java.io.FileNotFoundExce
+ption: java.io.FileNotFound
+Exception: HADOOP_HOME and 
+hadoop.home.dir are unset. 
+-see https://cwiki.apache.o
+rg/confluence/display/HADOO
+P2/WindowsProblems
+
+	at org.apache.hadoop.util.
+Shell.getWinUtilsPath(Shell
+.java:789)
+
+	at org.apache.hadoop.util.
+Shell.getSetPermissionComma
+nd(Shell.java:298)
+
+	at org.apache.hadoop.fs.Fi
+leUtil.chmod(FileUtil.java:
+1305)
+
+	at org.apache.hadoop.fs.Fi
+leUtil.chmod(FileUtil.java:
+1291)
+
+	at org.apache.spark.util.U
+tils$.fetchFile(Utils.scala
+:432)
+
+	at org.apache.spark.execut
+or.Executor.$anonfun$update
+Dependencies$14(Executor.sc
+ala:1300)
+
+	at org.apache.spark.execut
+or.Executor.$anonfun$update
+Dependencies$14$adapted(Exe
+cutor.scala:1291)
+
+	at scala.collection.Iterab
+leOnceOps.foreach(IterableO
+nce.scala:630)
+
+	at scala.collection.Iterab
+leOnceOps.foreach$(Iterable
+Once.scala:628)
+
+	at scala.collection.Abstra
+ctIterable.foreach(Iterable
+.scala:936)
+
+	at scala.collection.Iterab
+leOps$WithFilter.foreach(It
+erable.scala:906)
+
+	at org.apache.spark.execut
+or.Executor.updateDependenc
+ies(Executor.scala:1291)
+
+	at org.apache.spark.execut
+or.Executor.<init>(Executor
+.scala:392)
+
+	at org.apache.spark.schedu
+ler.local.LocalEndpoint.<in
+it>(LocalSchedulerBackend.s
+cala:66)
+
+	at org.apache.spark.schedu
+ler.local.LocalSchedulerBac
+kend.start(LocalSchedulerBa
+ckend.scala:136)
+
+	at org.apache.spark.schedu
+ler.TaskSchedulerImpl.start
+(TaskSchedulerImpl.scala:22
+9)
+
+	at org.apache.spark.SparkC
+ontext.<init>(SparkContext.
+scala:629)
+
+	at org.apache.spark.api.ja
+va.JavaSparkContext.<init>(
+JavaSparkContext.scala:59)
+
+	at java.base/jdk.internal.
+reflect.NativeConstructorAc
+cessorImpl.newInstance0(Nat
+ive Method)
+
+	at java.base/jdk.internal.
+reflect.NativeConstructorAc
+cessorImpl.newInstance(Nati
+veConstructorAccessorImpl.j
+ava:77)
+
+	at java.base/jdk.internal.
+reflect.DelegatingConstruct
+orAccessorImpl.newInstance(
+DelegatingConstructorAccess
+orImpl.java:45)
+
+	at java.base/java.lang.ref
+lect.Constructor.newInstanc
+eWithCaller(Constructor.jav
+a:500)
+
+	at java.base/java.lang.ref
+lect.Constructor.newInstanc
+e(Constructor.java:481)
+
+	at py4j.reflection.MethodI
+nvoker.invoke(MethodInvoker
+.java:247)
+
+	at py4j.reflection.Reflect
+ionEngine.invoke(Reflection
+Engine.java:374)
+
+	at py4j.Gateway.invoke(Gat
+eway.java:238)
+
+	at py4j.commands.Construct
+orCommand.invokeConstructor
+(ConstructorCommand.java:80
+)
+
+	at py4j.commands.Construct
+orCommand.execute(Construct
+orCommand.java:69)
+
+	at py4j.ClientServerConnec
+tion.waitForCommands(Client
+ServerConnection.java:184)
+
+	at py4j.ClientServerConnec
+tion.run(ClientServerConnec
+tion.java:108)
+
+	at java.base/java.lang.Thr
+ead.run(Thread.java:840)
+
+Caused by: java.io.FileNotF
+oundException: java.io.File
+NotFoundException: 
+HADOOP_HOME and 
+hadoop.home.dir are unset. 
+-see https://cwiki.apache.o
+rg/confluence/display/HADOO
+P2/WindowsProblems
+
+	at org.apache.hadoop.util.
+Shell.fileNotFoundException
+(Shell.java:601)
+
+	at org.apache.hadoop.util.
+Shell.getHadoopHomeDir(Shel
+l.java:622)
+
+	at org.apache.hadoop.util.
+Shell.getQualifiedBin(Shell
+.java:645)
+
+	at org.apache.hadoop.util.
+Shell.<clinit>(Shell.java:7
+42)
+
+	at org.apache.hadoop.util.
+StringUtils.<clinit>(String
+Utils.java:80)
+
+	at org.apache.hadoop.conf.
+Configuration.getTimeDurati
+onHelper(Configuration.java
+:1954)
+
+	at org.apache.hadoop.conf.
+Configuration.getTimeDurati
+on(Configuration.java:1912)
+
+	at org.apache.hadoop.conf.
+Configuration.getTimeDurati
+on(Configuration.java:1885)
+
+	at org.apache.hadoop.util.
+ShutdownHookManager.getShut
+downTimeout(ShutdownHookMan
+ager.java:183)
+
+	at org.apache.hadoop.util.
+ShutdownHookManager$HookEnt
+ry.<init>(ShutdownHookManag
+er.java:207)
+
+	at org.apache.hadoop.util.
+ShutdownHookManager.addShut
+downHook(ShutdownHookManage
+r.java:304)
+
+	at org.apache.spark.util.S
+parkShutdownHookManager.$an
+onfun$install$1(ShutdownHoo
+kManager.scala:194)
+
+	at scala.runtime.java8.JFu
+nction0$mcV$sp.apply(JFunct
+ion0$mcV$sp.scala:18)
+
+	at scala.Option.fold(Optio
+n.scala:263)
+
+	at org.apache.spark.util.S
+parkShutdownHookManager.ins
+tall(ShutdownHookManager.sc
+ala:195)
+
+	at org.apache.spark.util.S
+hutdownHookManager$.shutdow
+nHooks$lzycompute(ShutdownH
+ookManager.scala:55)
+
+	at org.apache.spark.util.S
+hutdownHookManager$.shutdow
+nHooks(ShutdownHookManager.
+scala:53)
+
+	at org.apache.spark.util.S
+hutdownHookManager$.addShut
+downHook(ShutdownHookManage
+r.scala:159)
+
+	at org.apache.spark.util.S
+hutdownHookManager$.<clinit
+>(ShutdownHookManager.scala
+:63)
+
+	at org.apache.spark.util.U
+tils$.createTempDir(Utils.s
+cala:249)
+
+	at org.apache.spark.util.S
+parkFileUtils.createTempDir
+(SparkFileUtils.scala:125)
+
+	at org.apache.spark.util.S
+parkFileUtils.createTempDir
+$(SparkFileUtils.scala:124)
+
+	at org.apache.spark.util.U
+tils$.createTempDir(Utils.s
+cala:97)
+
+	at org.apache.spark.deploy
+.SparkSubmit.prepareSubmitE
+nvironment(SparkSubmit.scal
+a:378)
+
+	at org.apache.spark.deploy
+.SparkSubmit.org$apache$spa
+rk$deploy$SparkSubmit$$runM
+ain(SparkSubmit.scala:962)
+
+	at org.apache.spark.deploy
+.SparkSubmit.doRunMain$1(Sp
+arkSubmit.scala:203)
+
+	at org.apache.spark.deploy
+.SparkSubmit.submit(SparkSu
+bmit.scala:226)
+
+	at org.apache.spark.deploy
+.SparkSubmit.doSubmit(Spark
+Submit.scala:95)
+
+	at org.apache.spark.deploy
+.SparkSubmit$$anon$2.doSubm
+it(SparkSubmit.scala:1168)
+
+	at org.apache.spark.deploy
+.SparkSubmit$.main(SparkSub
+mit.scala:1177)
+
+	at org.apache.spark.deploy
+.SparkSubmit.main(SparkSubm
+it.scala)
+
+Caused by: java.io.FileNotF
+oundException: HADOOP_HOME 
+and hadoop.home.dir are 
+unset.
+
+	at org.apache.hadoop.util.
+Shell.checkHadoopHomeInner(
+Shell.java:521)
+
+	at org.apache.hadoop.util.
+Shell.checkHadoopHome(Shell
+.java:492)
+
+	at org.apache.hadoop.util.
+Shell.<clinit>(Shell.java:5
+69)
+
+	... 27 more
+
+
+26/03/08 23:35:13 ERROR 
+Utils: Uncaught exception 
+in thread shutdown-hook-0
+java.lang.ExceptionInInitia
+lizerError
+	at org.apache.spark.execut
+or.Executor.stop(Executor.s
+cala:515)
+	at org.apache.spark.execut
+or.Executor.$anonfun$stopHo
+okReference$1(Executor.scal
+a:145)
+	at org.apache.spark.util.S
+parkShutdownHook.run(Shutdo
+wnHookManager.scala:231)
+	at org.apache.spark.util.S
+parkShutdownHookManager.$an
+onfun$runAll$2(ShutdownHook
+Manager.scala:205)
+	at scala.runtime.java8.JFu
+nction0$mcV$sp.apply(JFunct
+ion0$mcV$sp.scala:18)
+	at org.apache.spark.util.U
+tils$.logUncaughtExceptions
+(Utils.scala:1941)
+	at org.apache.spark.util.S
+parkShutdownHookManager.$an
+onfun$runAll$1(ShutdownHook
+Manager.scala:205)
+	at scala.runtime.java8.JFu
+nction0$mcV$sp.apply(JFunct
+ion0$mcV$sp.scala:18)
+	at scala.util.Try$.apply(T
+ry.scala:217)
+	at org.apache.spark.util.S
+parkShutdownHookManager.run
+All(ShutdownHookManager.sca
+la:205)
+	at org.apache.spark.util.S
+parkShutdownHookManager$$an
+on$2.run(ShutdownHookManage
+r.scala:184)
+	at java.base/java.util.con
+current.Executors$RunnableA
+dapter.call(Executors.java:
+539)
+	at java.base/java.util.con
+current.FutureTask.run(Futu
+reTask.java:264)
+	at java.base/java.util.con
+current.ThreadPoolExecutor.
+runWorker(ThreadPoolExecuto
+r.java:1136)
+	at java.base/java.util.con
+current.ThreadPoolExecutor$
+Worker.run(ThreadPoolExecut
+or.java:635)
+	at java.base/java.lang.Thr
+ead.run(Thread.java:840)
+Caused by: java.lang.NullPo
+interException: Cannot 
+invoke "org.apache.spark.Sp
+arkEnv.conf()" because the 
+return value of "org.apache
+.spark.SparkEnv$.get()" is 
+null
+	at org.apache.spark.shuffl
+e.ShuffleBlockPusher$.<clin
+it>(ShuffleBlockPusher.scal
+a:503)
+	... 16 more
+26/03/08 23:35:13 WARN 
+ShutdownHookManager: 
+ShutdownHook '' failed, jav
+a.util.concurrent.Execution
+Exception: java.lang.Except
+ionInInitializerError
+java.util.concurrent.Execut
+ionException: java.lang.Exc
+eptionInInitializerError
+	at java.base/java.util.con
+current.FutureTask.report(F
+utureTask.java:122)
+	at java.base/java.util.con
+current.FutureTask.get(Futu
+reTask.java:205)
+	at org.apache.hadoop.util.
+ShutdownHookManager.execute
+Shutdown(ShutdownHookManage
+r.java:124)
+	at org.apache.hadoop.util.
+ShutdownHookManager$1.run(S
+hutdownHookManager.java:95)
+Caused by: java.lang.Except
+ionInInitializerError
+	at org.apache.spark.execut
+or.Executor.stop(Executor.s
+cala:515)
+	at org.apache.spark.execut
+or.Executor.$anonfun$stopHo
+okReference$1(Executor.scal
+a:145)
+	at org.apache.spark.util.S
+parkShutdownHook.run(Shutdo
+wnHookManager.scala:231)
+	at org.apache.spark.util.S
+parkShutdownHookManager.$an
+onfun$runAll$2(ShutdownHook
+Manager.scala:205)
+	at scala.runtime.java8.JFu
+nction0$mcV$sp.apply(JFunct
+ion0$mcV$sp.scala:18)
+	at org.apache.spark.util.U
+tils$.logUncaughtExceptions
+(Utils.scala:1941)
+	at org.apache.spark.util.S
+parkShutdownHookManager.$an
+onfun$runAll$1(ShutdownHook
+Manager.scala:205)
+	at scala.runtime.java8.JFu
+nction0$mcV$sp.apply(JFunct
+ion0$mcV$sp.scala:18)
+	at scala.util.Try$.apply(T
+ry.scala:217)
+	at org.apache.spark.util.S
+parkShutdownHookManager.run
+All(ShutdownHookManager.sca
+la:205)
+	at org.apache.spark.util.S
+parkShutdownHookManager$$an
+on$2.run(ShutdownHookManage
+r.scala:184)
+	at java.base/java.util.con
+current.Executors$RunnableA
+dapter.call(Executors.java:
+539)
+	at java.base/java.util.con
+current.FutureTask.run(Futu
+reTask.java:264)
+	at java.base/java.util.con
+current.ThreadPoolExecutor.
+runWorker(ThreadPoolExecuto
+r.java:1136)
+	at java.base/java.util.con
+current.ThreadPoolExecutor$
+Worker.run(ThreadPoolExecut
+or.java:635)
+	at java.base/java.lang.Thr
+ead.run(Thread.java:840)
+Caused by: java.lang.NullPo
+interException: Cannot 
+invoke "org.apache.spark.Sp
+arkEnv.conf()" because the 
+return value of "org.apache
+.spark.SparkEnv$.get()" is 
+null
+	at org.apache.spark.shuffl
+e.ShuffleBlockPusher$.<clin
+it>(ShuffleBlockPusher.scal
+a:503)
+	... 16 more
+SUCCESS: The process with PID 16764 (child process of PID 3372) has been terminated.
+SUCCESS: The process with PID 3372 (child process of PID 4144) has been terminated.
+SUCCESS: The process with PID 4144 (child process of PID 16472) has been terminated.

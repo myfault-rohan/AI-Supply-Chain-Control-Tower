@@ -1,0 +1,6 @@
+Listening for messages on 'inventory_updates'...
+Message 0: {"product_id": "PROD-0004", "warehouse_id": "WH-05", "current_stock": 43921, "safety_stock": 6737, "reorder_point": 16415, "message_timestamp": "2026-03-08T21:48:05.688048"}
+Message 1: {"product_id": "PROD-0005", "warehouse_id": "WH-01", "current_stock": 26582, "safety_stock": 6033, "reorder_point": 12271, "message_timestamp": "2026-03-08T21:48:06.692372"}
+Message 2: {"product_id": "PROD-0005", "warehouse_id": "WH-05", "current_stock": 45836, "safety_stock": 8821, "reorder_point": 15612, "message_timestamp": "2026-03-08T21:48:07.709702"}
+Message 3: {"product_id": "PROD-0005", "warehouse_id": "WH-04", "current_stock": 87096, "safety_stock": 20696, "reorder_point": 35589, "message_timestamp": "2026-03-08T21:48:08.727815"}
+Message 4: {"product_id": "PROD-0006", "warehouse_id": "WH-04", "current_stock": 82383, "safety_stock": 21024, "reorder_point": 36351, "message_timestamp": "2026-03-08T21:48:09.746604"}

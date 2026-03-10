@@ -1,0 +1,4 @@
+warehouse_id,warehouse_location,capacity,total_stock,utilization_percent,status
+W1,Mumbai Terminal,20000,16000,80.0,NORMAL
+W2,Delhi Terminal,18000,11500,63.888888888888886,NORMAL
+W3,Chennai Terminal,15000,9000,60.0,NORMAL
