@@ -10,3 +10,4 @@ plotly
 streamlit-autorefresh
 scikit-learn
 xgboost
+python-multipart

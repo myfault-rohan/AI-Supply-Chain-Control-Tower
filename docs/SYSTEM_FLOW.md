@@ -1,13 +1,18 @@
-# System Flow
+# System Data Flow
 
-1. **Date Entry**: Data enters the system through Kafka events or uploaded datasets.
-2. **Spark Processing**: Spark processes streaming events and generates analytics datasets.
-3. **Machine Learning**: Machine learning models calculate demand forecasts.
-4. **Risk Detection**: The risk engine detects supply chain issues and bottlenecks.
-5. **API Layer**: FastAPI exposes analytics via REST APIs.
-6. **Visualization**: Streamlit dashboard visualizes results in real-time.
+This document outlines the end-to-end data flow within the system.
 
-### Pipeline Diagram
-```text
-Kafka → Spark → ML Analytics → FastAPI → Dashboard
-```
+## 1. Data Ingestion
+- `kafka_producer.py` simulates real-time activity and sends events to Kafka topics (`inventory_updates`).
+
+## 2. Real-time Processing
+- `spark_streaming_processor.py` consumes data from Kafka.
+- Features are engineered on-the-fly (e.g., rolling averages, demand volatility).
+- Results are saved to `dataset/live_supply_chain`.
+
+## 3. Risk & AI Analysis
+- The `Risk Engine` runs periodically to detect stockout risks based on current inventory and lead times.
+- The `AI Advisor` uses the processed data to answer user queries via the API.
+
+## 4. Visualization
+- The `Streamlit Dashboard` polls the `FastAPI Backend` to display real-time metrics and charts.

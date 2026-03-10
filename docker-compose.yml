@@ -1,0 +1,69 @@
+services:
+
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATASET_DIR=dataset
+    volumes:
+      - ./dataset:/app/dataset
+      - ./reports:/app/reports
+    command: uvicorn backend.api_server:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - kafka
+
+  dashboard:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://backend:8000
+    volumes:
+      - ./dataset:/app/dataset
+      - ./reports:/app/reports
+    command: streamlit run dashboard/dashboard_app.py --server.port 8501 --server.address 0.0.0.0
+    depends_on:
+      - backend
+
+  spark:
+    image: bitnamilegacy/spark:3.5.1
+    ports:
+      - "4040:4040"
+    environment:
+      - SPARK_MODE=master
+
+  kafka:
+    image: bitnamilegacy/kafka:3.7.0
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+
+  spark-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    volumes:
+      - ./dataset:/app/dataset
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    command: python3 /app/spark_streaming_processor.py
+    depends_on:
+      - kafka
+      - spark
+
+  kafka-producer:
+    build: .
+    volumes:
+      - ./dataset:/app/dataset
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    command: python stream_pipeline/kafka_producer.py --delay 2
+    depends_on:
+      - kafka

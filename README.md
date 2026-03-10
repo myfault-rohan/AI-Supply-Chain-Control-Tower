@@ -53,26 +53,17 @@ Ask questions about supply chain status.
 ### Scenario Simulation
 Simulate supply chain disruptions and demand changes.
 
-### Automated Daily Risk Reports
-Generate downloadable reports for managers.
+### User Authentication
+Secure login system to protect sensitive supply chain data.
+
+### Multi-Tenant Workspaces
+Isolated data environments for different users and projects.
 
 ---
 
 ## System Architecture
 
-```text
-User Dashboard (Streamlit)
-↓
-FastAPI Backend
-↓
-Machine Learning + Risk Engine
-↓
-Spark Processing
-↓
-Kafka Streaming
-↓
-Supply Chain Data
-```
+![Architecture Diagram](docs/architecture.png)
 
 ---
 
@@ -212,6 +203,21 @@ Example dashboard panels:
 • **Cost Analytics**: Financial impact of supply chain disruptions.  
 
 *(Screenshots can be added here once available)*
+
+---
+
+## Running with Docker
+
+Start the entire system:
+
+```bash
+docker-compose up
+```
+
+Services:
+
+- **Dashboard** → http://localhost:8501  
+- **API** → http://localhost:8000/docs
 
 ---
 

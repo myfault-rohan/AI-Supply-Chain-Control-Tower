@@ -183,17 +183,21 @@ UPLOAD_FOLDER = "dataset/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.post("/upload_data")
-async def upload_data(file: UploadFile = File(...)):
-    """Endpoint to upload a single supply chain data file."""
-    file_location = os.path.join(UPLOAD_FOLDER, file.filename)
+async def upload_data(username: str, file: UploadFile = File(...)):
+    """Endpoint to upload a supply chain data file to a user's workspace."""
+    workspace_dir = os.path.join("dataset", "workspaces", username)
+    os.makedirs(workspace_dir, exist_ok=True)
+    
+    file_location = os.path.join(workspace_dir, file.filename)
     
     try:
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
         return {
-            "message": "File uploaded successfully",
-            "filename": file.filename
+            "message": f"File uploaded successfully to {username}'s workspace",
+            "filename": file.filename,
+            "workspace": username
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading file: {str(e)}")

@@ -1,0 +1,11 @@
+FROM apache/spark:3.5.0
+
+USER root
+WORKDIR /app
+
+# Install python dependencies
+RUN pip install --no-cache-dir pandas kafka-python pyspark
+
+COPY spark_processing/spark_streaming_processor.py /app/
+
+CMD ["python3", "/app/spark_streaming_processor.py"]

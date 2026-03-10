@@ -2,12 +2,11 @@ import os
 import sys
 import logging
 
-# Set HADOOP_HOME environment variable for Windows (must be absolute path)
-# This is necessary for Spark to work correctly on Windows.
-_project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.environ['HADOOP_HOME'] = os.path.join(_project_dir, 'tmp', 'hadoop')
-# Ensure winutils.exe is on the PATH
-os.environ['PATH'] = os.path.join(os.environ['HADOOP_HOME'], 'bin') + os.pathsep + os.environ.get('PATH', '')
+# Set HADOOP_HOME environment variable for Windows
+if os.name == 'nt':
+    _project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    os.environ['HADOOP_HOME'] = os.path.join(_project_dir, 'tmp', 'hadoop')
+    os.environ['PATH'] = os.path.join(os.environ['HADOOP_HOME'], 'bin') + os.pathsep + os.environ.get('PATH', '')
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col
@@ -35,9 +34,10 @@ def process_inventory_stream():
         logging.info("SparkSession created successfully.")
 
         # 2. Read streaming data from Kafka
+        KAFKA_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
         kafka_stream_df = spark.readStream \
             .format("kafka") \
-            .option("kafka.bootstrap.servers", "localhost:9092") \
+            .option("kafka.bootstrap.servers", KAFKA_SERVERS) \
             .option("subscribe", "inventory_updates") \
             .option("startingOffsets", "latest") \
             .load()

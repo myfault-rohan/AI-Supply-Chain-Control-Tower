@@ -16,6 +16,31 @@ if PROJECT_ROOT not in sys.path:
 from alerts.ai_supply_chain_advisor import ask_supply_chain_question
 from risk_engine.simulation_engine import simulate_supply_chain
 
+from backend.auth import authenticate
+
+# Authentication logic
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "username" not in st.session_state:
+    st.session_state.username = None
+
+if not st.session_state.logged_in:
+    st.set_page_config(page_title="Supply Chain Login", page_icon="🔑")
+    st.title("🔐 AI Supply Chain Control Tower Login")
+    
+    with st.container():
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        
+        if st.button("Login"):
+            if authenticate(username, password):
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.rerun()
+            else:
+                st.error("Invalid credentials")
+    st.stop()
+
 # Page configuration
 st.set_page_config(
     page_title="Supply Chain Control Tower",
@@ -24,7 +49,7 @@ st.set_page_config(
 )
 
 # Configuration
-API_URL = "http://127.0.0.1:8000"
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 
 # --- API Fetching Functions ---
 
@@ -210,6 +235,7 @@ def main():
             with st.spinner("Uploading file..."):
                 response = requests.post(
                     f"{API_URL}/upload_data",
+                    params={"username": st.session_state.username},
                     files={"file": uploaded_file}
                 )
 

@@ -10,7 +10,8 @@ from kafka import KafkaProducer
 from datetime import datetime
 
 # Configuration
-KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'
+import os
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", 'localhost:9092')
 KAFKA_TOPIC = 'inventory_updates'
 INPUT_FILE = 'dataset/inventory.csv'
 MESSAGE_DELAY_SECONDS = 1
