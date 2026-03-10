@@ -1,0 +1,4 @@
+supplier_id,supplier_name,lead_time_days,reliability_score
+S1,Saudi Supplier,10,0.92
+S2,UAE Supplier,8,0.88
+S3,Russia Supplier,15,0.73

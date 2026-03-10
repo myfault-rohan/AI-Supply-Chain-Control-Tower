@@ -183,6 +183,38 @@ Recommended reorder: 9000 units
 
 ---
 
+## Demo Dataset
+
+A sample dataset is included in:
+
+`dataset/demo_data/`
+
+Files:
+
+- `inventory.csv`
+- `sales.csv`
+- `suppliers.csv`
+- `shipments.csv`
+- `warehouses.csv`
+
+You can copy these files into the `dataset/` folder to run the system.
+
+---
+
+## Dashboard Preview
+
+Example dashboard panels:
+
+• **Global Supply Chain Risk Overview**: High-level health metrics.  
+• **Live Inventory Monitor**: Real-time stock tracking from Spark.  
+• **Supplier Performance Analytics**: reliability and lead-time analysis.  
+• **Warehouse Utilization**: Capacity and distribution tracking.  
+• **Cost Analytics**: Financial impact of supply chain disruptions.  
+
+*(Screenshots can be added here once available)*
+
+---
+
 ## Future Improvements
 
 • Cloud deployment (AWS / GCP)  
