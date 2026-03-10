@@ -4,7 +4,7 @@ import os
 def analyze_supplier_performance():
     """Analyzes supplier performance based on shipment data."""
     input_file = "dataset/shipments.csv"
-    output_file = "dataset/supplier_performance.csv"
+    output_file = "dataset/processed files/supplier_performance.csv"
 
     if not os.path.exists(input_file):
         print(f"Error: {input_file} not found.")

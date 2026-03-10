@@ -1,0 +1,8 @@
+filename,type,rows,cols
+global_data.csv,geospatial,3,2
+International_LPI_from_2007_to_2023_0.xlsx,unknown,0,0
+inventory.csv,generic,106367,15
+sales.csv,generic,3,5
+shipments.csv,generic,3,5
+suppliers.csv,suppliers,3,5
+warehouses.csv,generic,3,5

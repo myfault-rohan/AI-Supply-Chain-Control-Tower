@@ -179,28 +179,101 @@ def get_daily_report():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading daily report: {str(e)}")
 
-UPLOAD_FOLDER = "dataset/uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 @app.post("/upload_data")
-async def upload_data(username: str, file: UploadFile = File(...)):
-    """Endpoint to upload a supply chain data file to a user's workspace."""
+async def upload_data(username: str, files: List[UploadFile] = File(...)):
+    """Endpoint to upload multiple supply chain data files to a user's workspace."""
     workspace_dir = os.path.join("dataset", "workspaces", username)
     os.makedirs(workspace_dir, exist_ok=True)
     
-    file_location = os.path.join(workspace_dir, file.filename)
+    saved_files = []
     
     try:
-        with open(file_location, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        for file in files:
+            file_location = os.path.join(workspace_dir, file.filename)
+            
+            # Read and check size
+            content = await file.read()
+            if len(content) > MAX_FILE_SIZE:
+                 raise HTTPException(status_code=413, detail=f"File {file.filename} exceeds the 50MB size limit.")
+            
+            # Reset file pointer for writing (or just write content)
+            with open(file_location, "wb") as buffer:
+                buffer.write(content)
+            
+            saved_files.append(file.filename)
+        
+        # Trigger the advanced processing pipeline
+        from backend.data_processor import process_uploaded_data
+        process_uploaded_data(username)
         
         return {
-            "message": f"File uploaded successfully to {username}'s workspace",
-            "filename": file.filename,
+            "message": f"Successfully uploaded {len(saved_files)} files and triggered processing for {username}",
+            "files": saved_files,
             "workspace": username
         }
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error uploading file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error uploading or processing files: {str(e)}")
+
+@app.get("/workspace_files")
+def get_workspace_files(username: str):
+    """Returns a list of files in the user's workspace with metadata."""
+    meta_path = os.path.join(PROCESSED_DATA_DIR, "workspace_metadata.csv")
+    if not os.path.exists(meta_path):
+        return []
+    try:
+        df = pd.read_csv(meta_path)
+        return df.to_dict(orient="records")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading workspace metadata: {str(e)}")
+
+@app.get("/data_explorer")
+def get_data_explorer(username: str, filename: str):
+    """Returns the content of a specific file in the workspace for preview."""
+    workspace_dir = os.path.join("dataset", "workspaces", username)
+    file_path = os.path.join(workspace_dir, filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    try:
+        # Load first 1000 rows for preview
+        if filename.endswith('.csv'):
+            df = pd.read_csv(file_path).head(1000)
+        elif filename.endswith('.xlsx'):
+            df = pd.read_excel(file_path).head(1000)
+        elif filename.endswith('.json'):
+            df = pd.read_json(file_path).head(1000)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file format")
+            
+        return df.fillna("").to_dict(orient="records")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading file {filename}: {str(e)}")
+
+@app.get("/admin/system_health")
+def get_system_health():
+    """Returns administrative system health metrics."""
+    return {
+        "status": "Healthy",
+        "api_version": "1.0.0",
+        "workspaces": len(os.listdir("dataset/workspaces")) if os.path.exists("dataset/workspaces") else 0,
+        "processed_files": len(os.listdir(PROCESSED_DATA_DIR)) if os.path.exists(PROCESSED_DATA_DIR) else 0,
+        "storage_usage_mb": 142.5 # Mock value for now
+    }
+
+@app.post("/admin/clear_workspace")
+def clear_workspace(username: str):
+    """Administrative action to clear a user's workspace data."""
+    workspace_dir = os.path.join("dataset", "workspaces", username)
+    if os.path.exists(workspace_dir):
+        shutil.rmtree(workspace_dir)
+        os.makedirs(workspace_dir, exist_ok=True)
+        return {"message": f"Workspace {username} cleared successfully"}
+    return {"message": "Workspace not found"}
 
 if __name__ == "__main__":
     import uvicorn

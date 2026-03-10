@@ -4,7 +4,7 @@ import os
 def perform_cost_analysis():
     """Performs supply chain cost analytics based on demand predictions and inventory."""
     input_file = "dataset/demand_predictions.csv"
-    output_file = "dataset/cost_analysis.csv"
+    output_file = "dataset/processed files/cost_analysis.csv"
 
     if not os.path.exists(input_file):
         print(f"Error: {input_file} not found.")

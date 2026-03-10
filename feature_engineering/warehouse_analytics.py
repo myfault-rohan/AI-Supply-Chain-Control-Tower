@@ -5,7 +5,7 @@ def analyze_warehouse_utilization():
     """Analyzes warehouse utilization by merging inventory and capacity data."""
     inventory_file = "dataset/inventory.csv"
     warehouses_file = "dataset/warehouses.csv"
-    output_file = "dataset/warehouse_utilization.csv"
+    output_file = "dataset/processed files/warehouse_utilization.csv"
 
     if not os.path.exists(inventory_file) or not os.path.exists(warehouses_file):
         print("Error: Required input files missing.")

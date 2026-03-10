@@ -13,8 +13,8 @@ def calculate_health(row):
         return "GOOD", 100
 
 def main():
-    input_file = 'dataset/reorder_recommendations.csv'
-    output_file = 'dataset/supply_chain_health.csv'
+    input_file = 'dataset/processed files/reorder_recommendations.csv'
+    output_file = 'dataset/processed files/supply_chain_health.csv'
     
     print("-" * 50)
     print("🚀 Supply Chain Health Score Engine")

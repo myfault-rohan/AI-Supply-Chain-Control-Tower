@@ -11,7 +11,7 @@ import os
 DEMAND_FILE = 'dataset/demand_predictions.csv'
 SHIPMENTS_FILE = 'dataset/shipments.csv'
 SUPPLIERS_FILE = 'dataset/suppliers.csv'
-OUTPUT_FILE = 'dataset/reorder_recommendations.csv'
+OUTPUT_FILE = 'dataset/processed files/reorder_recommendations.csv'
 
 def load_data():
     """Load all necessary datasets"""
