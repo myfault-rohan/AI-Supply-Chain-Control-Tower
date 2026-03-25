@@ -1,13 +1,19 @@
+"""
+Global Risk Dashboard Aggregator
+Aggregates supply chain risks from multiple processed datasets into a unified summary.
+"""
+
 import pandas as pd
 import os
 
 def aggregate_global_risks():
     """Aggregates supply chain risks from multiple datasets into a summary."""
-    health_file = "dataset/supply_chain_health.csv"
-    supplier_file = "dataset/supplier_performance.csv"
-    warehouse_file = "dataset/warehouse_utilization.csv"
-    cost_file = "dataset/cost_analysis.csv"
-    output_file = "dataset/global_risk_summary.csv"
+    processed_dir = "dataset/processed files"
+    health_file = os.path.join(processed_dir, "supply_chain_health.csv")
+    supplier_file = os.path.join(processed_dir, "supplier_performance.csv")
+    warehouse_file = os.path.join(processed_dir, "warehouse_utilization.csv")
+    cost_file = os.path.join(processed_dir, "cost_analysis.csv")
+    output_file = os.path.join(processed_dir, "global_risk_summary.csv")
 
     # Initialize counts
     critical_products = 0

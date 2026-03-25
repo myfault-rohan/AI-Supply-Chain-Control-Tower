@@ -1,50 +1,69 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os, sys
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from dashboard.utils import fetch_data, no_data_view
+from dashboard.i18n import t
 
-st.title("🚚 Supply Chain Deep-Dive")
-st.markdown("### Granular Operational Metrics")
+st.title(t("analytics_title"))
+st.markdown(f"### {t('analytics_subtitle')}")
 
-tabs = st.tabs(["📦 Inventory", "🚚 Suppliers", "🏭 Warehouses", "💰 Costs"])
+tabs = st.tabs([t("tab_inventory"), t("tab_suppliers"), t("tab_warehouses"), t("tab_costs")])
 
 with tabs[0]:
-    st.subheader("Inventory Distribution")
+    st.subheader(t("inventory_dist"))
     inventory_df = fetch_data("/inventory")
     if inventory_df.empty:
         no_data_view("Inventory Metrics")
     else:
-        fig = px.bar(inventory_df, x="product_id", y="current_stock", color="inventory_days", template="plotly_dark")
+        fig = px.bar(inventory_df, x="product_id", y="current_stock", 
+                     color="inventory_days" if "inventory_days" in inventory_df.columns else None,
+                     template="plotly_dark",
+                     color_continuous_scale="RdYlGn_r")
         st.plotly_chart(fig, use_container_width=True)
         st.dataframe(inventory_df, use_container_width=True)
 
 with tabs[1]:
-    st.subheader("Supplier Reliability Matrix")
+    st.subheader(t("supplier_matrix"))
     supplier_df = fetch_data("/supplier_performance")
     if supplier_df.empty:
         no_data_view("Supplier Performance")
     else:
-        fig = px.scatter(supplier_df, x="average_delay", y="reliability_score", size="total_shipments", color="supplier_status", template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+        required_cols = ["average_delay", "reliability_score", "total_shipments", "supplier_status"]
+        if all(c in supplier_df.columns for c in required_cols):
+            fig = px.scatter(supplier_df, x="average_delay", y="reliability_score", 
+                           size="total_shipments", color="supplier_status", 
+                           template="plotly_dark",
+                           color_discrete_map={"GOOD": "#00ff88", "WARNING": "#ffcc00", "CRITICAL": "#ff3300"})
+            st.plotly_chart(fig, use_container_width=True)
         st.dataframe(supplier_df, use_container_width=True)
 
 with tabs[2]:
-    st.subheader("Warehouse Capacity Utilization")
+    st.subheader(t("warehouse_util"))
     wh_df = fetch_data("/warehouse_utilization")
     if wh_df.empty:
         no_data_view("Warehouse Metrics")
     else:
         st.dataframe(wh_df, use_container_width=True)
-        # Utilization Gauges (Simplified for now)
-        for _, row in wh_df.iterrows():
-            st.write(f"**{row['warehouse_location']}**")
-            st.progress(row['utilization_percent'] / 100)
+        if "utilization_percent" in wh_df.columns and "warehouse_location" in wh_df.columns:
+            for _, row in wh_df.iterrows():
+                st.write(f"**{row['warehouse_location']}**")
+                pct = min(row['utilization_percent'] / 100, 1.0)
+                st.progress(pct)
 
 with tabs[3]:
-    st.subheader("Supply Chain Financial Impact")
+    st.subheader(t("cost_impact"))
     cost_df = fetch_data("/cost_analysis")
     if cost_df.empty:
         no_data_view("Cost Analytics")
     else:
-        fig = px.treemap(cost_df, path=['product_id'], values='total_cost_impact', template="plotly_dark")
-        st.plotly_chart(fig, use_container_width=True)
+        if "total_cost_impact" in cost_df.columns and "product_id" in cost_df.columns:
+            fig = px.treemap(cost_df, path=['product_id'], values='total_cost_impact', template="plotly_dark",
+                           color='total_cost_impact', color_continuous_scale="Reds")
+            st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(cost_df, use_container_width=True)

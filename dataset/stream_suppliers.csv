@@ -1,4 +1,4 @@
-supplier_id,supplier_name,reliability_score,country,lead_time_days
-S001,Global Logistics,0.95,USA,5
-S002,Euro Supply,0.88,Germany,7
-S003,Asia Parts,0.92,Japan,10
+supplier_id,supplier_name,lead_time_days,reliability_score
+S1,Saudi Supplier,10,0.92
+S2,UAE Supplier,8,0.88
+S3,Russia Supplier,15,0.73

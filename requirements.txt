@@ -1,13 +1,40 @@
+# Core Framework
 fastapi
 uvicorn
+pydantic
+python-multipart
+
+# Data Processing
 pandas
 numpy
-streamlit
-requests
-pyspark
-kafka-python
-plotly
-streamlit-autorefresh
+openpyxl
+
+# Machine Learning
 scikit-learn
 xgboost
-python-multipart
+
+# Dashboard
+streamlit
+plotly
+streamlit-autorefresh
+
+# HTTP & API
+requests
+httpx
+
+# Security
+passlib[bcrypt]
+python-jose[cryptography]
+
+# Configuration
+python-dotenv
+
+# AI Advisor (optional — set ANTHROPIC_API_KEY in .env)
+anthropic
+
+# PDF Reports
+reportlab
+
+# Testing
+pytest
+pytest-cov

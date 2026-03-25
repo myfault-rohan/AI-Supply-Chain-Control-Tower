@@ -1,89 +1,124 @@
-import pandas as pd
 import os
+import pandas as pd
 from datetime import datetime
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib import colors
+import sys
 
-def generate_daily_report():
-    """Generates a daily supply chain risk report by consolidating multiple datasets."""
-    
-    # Define paths
-    datasets = {
-        "risk_summary": "dataset/global_risk_summary.csv",
-        "health": "dataset/supply_chain_health.csv",
-        "supplier": "dataset/supplier_performance.csv",
-        "warehouse": "dataset/warehouse_utilization.csv",
-        "cost": "dataset/cost_analysis.csv"
-    }
-    
-    output_dir = "reports"
-    output_file = os.path.join(output_dir, "daily_supply_chain_report.csv")
-    
-    # Ensure output directory exists
-    os.makedirs(output_dir, exist_ok=True)
-    
-    print("--- Daily Supply Chain Risk Report Generator ---")
-    
-    # 1. Load Summary Data
-    summary_msg = ""
-    if os.path.exists(datasets["risk_summary"]):
-        risk_df = pd.read_csv(datasets["risk_summary"])
-        summary_msg = f"""
-TOTAL RISK OVERVIEW:
-- Critical Products: {risk_df['critical_products'][0]}
-- Unreliable Suppliers: {risk_df['unreliable_suppliers'][0]}
-- Overloaded Warehouses: {risk_df['overloaded_warehouses'][0]}
-- High Cost Impact Items: {risk_df['high_cost_products'][0]}
-"""
-    else:
-        summary_msg = "Risk summary data missing."
-    
-    print(summary_msg)
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
-    # 2. Extract Top 5 Critical Products
-    top_critical = pd.DataFrame()
-    if os.path.exists(datasets["health"]):
-        health_df = pd.read_csv(datasets["health"])
-        top_critical = health_df[health_df['health_status'] == 'CRITICAL'].sort_values(by='days_until_stockout').head(5)
-    
-    # 3. Extract Top 5 Unreliable Suppliers
-    top_suppliers = pd.DataFrame()
-    if os.path.exists(datasets["supplier"]):
-        supplier_df = pd.read_csv(datasets["supplier"])
-        top_suppliers = supplier_df.sort_values(by='reliability_score').head(5)
-        
-    # 4. Extract Top 5 High Cost Products
-    top_costs = pd.DataFrame()
-    if os.path.exists(datasets["cost"]):
-        cost_df = pd.read_csv(datasets["cost"])
-        top_costs = cost_df.sort_values(by='total_cost_impact', ascending=False).head(5)
+from config import DATASET_DIR
+PROCESSED_DIR = os.path.join(DATASET_DIR, "processed files")
 
-    # 5. Combine and Save a "Flat" Report for Daily Tracking
-    # Since these are different shapes, we'll save them as sections in a CSV or just log them.
-    # For a useful CSV, we'll create a structured summary.
+def generate_pdf_report():
+    reports_dir = os.path.join(PROJECT_ROOT, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+    pdf_path = os.path.join(reports_dir, f"executive_report_{datetime.now().strftime('%Y%m%d')}.pdf")
     
-    report_data = {
-        "Report Date": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-        "Critical Products Count": [len(top_critical) if not top_critical.empty else 0],
-        "Top Critical Item": [top_critical['product_id'].iloc[0] if not top_critical.empty else "N/A"],
-        "Top Cost Impact Item": [top_costs['product_id'].iloc[0] if not top_costs.empty else "N/A"],
-        "Worst Supplier": [top_suppliers['supplier_id'].iloc[0] if not top_suppliers.empty else "N/A"]
-    }
+    doc = SimpleDocTemplate(pdf_path, pagesize=letter)
+    styles = getSampleStyleSheet()
+    Story = []
     
-    report_df = pd.DataFrame(report_data)
-    report_df.to_csv(output_file, index=False)
+    # 1. Cover
+    Story.append(Paragraph("AI Supply Chain Control Tower", styles['Title']))
+    Story.append(Paragraph(f"Executive Daily Report - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
+    Story.append(Spacer(1, 20))
     
-    print(f"Report saved to: {output_file}")
-    
-    if not top_critical.empty:
-        print("\nTOP 5 CRITICAL PRODUCTS:")
-        print(top_critical[['product_id', 'days_until_stockout']])
+    # Load Data
+    def load_df(name):
+        p = os.path.join(PROCESSED_DIR, name)
+        return pd.read_csv(p) if os.path.exists(p) else pd.DataFrame()
         
-    if not top_suppliers.empty:
-        print("\nTOP 5 UNRELIABLE SUPPLIERS:")
-        print(top_suppliers[['supplier_id', 'reliability_score']])
-        
-    if not top_costs.empty:
-        print("\nTOP 5 HIGH COST PRODUCTS:")
-        print(top_costs[['product_id', 'total_cost_impact']])
+    health_df = load_df("supply_chain_health.csv")
+    sup_df = load_df("supplier_performance.csv")
+    ware_df = load_df("warehouse_utilization.csv")
+    cost_df = load_df("cost_analysis.csv")
+    reorder_df = load_df("reorder_recommendations.csv")
+    
+    # 2. Executive Summary Table
+    Story.append(Paragraph("Executive Summary", styles['Heading2']))
+    total_products = len(health_df)
+    crit = (health_df["health_status"] == "CRITICAL").sum() if not health_df.empty else 0
+    warn = (health_df["health_status"] == "WARNING").sum() if not health_df.empty else 0
+    score = health_df["health_score"].mean() if not health_df.empty else 0
+    
+    summary_data = [
+        ["Metric", "Value"],
+        ["Total Products", str(total_products)],
+        ["Critical Products", str(crit)],
+        ["Warning Products", str(warn)],
+        ["Avg Health Score", f"{score:.1f}%"]
+    ]
+    t = Table(summary_data)
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.grey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('GRID', (0,0), (-1,-1), 1, colors.black)
+    ]))
+    Story.append(t)
+    Story.append(Spacer(1, 20))
+    
+    # 3. Top 5 Critical
+    Story.append(Paragraph("Top 5 Critical Products", styles['Heading2']))
+    if not health_df.empty:
+        crit_df = health_df[health_df["health_status"] == "CRITICAL"].head(5)
+        crit_data = [["Product", "Stock", "Days Until Stockout"]]
+        for _, r in crit_df.iterrows():
+            crit_data.append([str(r['product_id']), str(r['current_stock']), str(r['days_until_stockout'])])
+        t2 = Table(crit_data)
+        t2.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.darkred),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+            ('GRID', (0,0), (-1,-1), 1, colors.black)
+        ]))
+        Story.append(t2)
+    Story.append(Spacer(1, 20))
+    
+    # 4. Supplier League Table
+    Story.append(Paragraph("Supplier Performance", styles['Heading2']))
+    if not sup_df.empty:
+        s_df = sup_df.sort_values("reliability_score", ascending=False).head(5)
+        s_data = [["Supplier", "Reliability %", "Delay Rate %"]]
+        for _, r in s_df.iterrows():
+            s_data.append([str(r['supplier_id']), f"{r['reliability_score']}%", f"{r['delay_rate']}%"])
+        Story.append(Table(s_data, style=TableStyle([('GRID', (0,0), (-1,-1), 1, colors.black)])))
+    Story.append(Spacer(1, 20))
+    
+    # 5. Warehouses
+    Story.append(Paragraph("Warehouse Utilization", styles['Heading2']))
+    if not ware_df.empty:
+        w_data = [["Warehouse", "Utilization %", "Status"]]
+        for _, r in ware_df.iterrows():
+            w_data.append([str(r['warehouse_id']), f"{r['utilization_percent']}%", str(r['status'])])
+        Story.append(Table(w_data, style=TableStyle([('GRID', (0,0), (-1,-1), 1, colors.black)])))
+    Story.append(Spacer(1, 20))
+    
+    # 6. Cost Risk
+    Story.append(Paragraph("Cost Risk Exposure", styles['Heading2']))
+    if not cost_df.empty:
+        total_risk = cost_df["total_cost_impact"].sum()
+        Story.append(Paragraph(f"Total Financial Exposure: ${total_risk:,.2f}", styles['Normal']))
+    Story.append(Spacer(1, 20))
+    
+    # 7. Actions
+    Story.append(Paragraph("Recommended Actions", styles['Heading2']))
+    if not reorder_df.empty:
+        acts = reorder_df[reorder_df["stockout_risk"]].head(5)
+        for _, r in acts.iterrows():
+            Story.append(Paragraph(f"• {r['alert_message']}", styles['Normal']))
+    Story.append(Spacer(1, 30))
+    
+    # Footer
+    Story.append(Paragraph("Confidential — AI Supply Chain Control Tower", styles['Italic']))
+    
+    doc.build(Story)
+    return pdf_path
 
 if __name__ == "__main__":
-    generate_daily_report()
+    print(generate_pdf_report())

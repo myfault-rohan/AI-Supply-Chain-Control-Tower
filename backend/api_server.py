@@ -1,88 +1,251 @@
-import os
-import shutil
-import pandas as pd
-from typing import List, Dict, Optional
-from fastapi import FastAPI, HTTPException, UploadFile, File
+"""
+AI Supply Chain Control Tower — FastAPI Backend
+Enterprise-grade REST API with JWT authentication, CORS support,
+comprehensive OpenAPI documentation, and data-quality endpoints.
+"""
 
-app = FastAPI(
-    title="AI Supply Chain Control Tower API",
-    description="Backend API for querying supply chain inventory, forecasts, and reorder recommendations.",
-    version="1.0.0"
+import os
+import sys
+import shutil
+import logging
+from datetime import datetime, timezone
+from typing import List, Dict, Optional
+
+import pandas as pd
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Query
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+# Add project root to path
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from config import API_URL, DATASET_DIR
+PROCESSED_DATA_DIR = os.path.join(DATASET_DIR, "processed files")
+APP_VERSION = "2.0.0"
+APP_TITLE = "AI Supply Chain Control Tower API"
+API_HOST = "127.0.0.1"
+API_PORT = 8000
+
+from backend.auth import authenticate, create_access_token, verify_token
+from backend.schemas import (
+    HealthCheck, TokenRequest, TokenResponse, UploadResponse,
+    SystemHealth, DataQualityReport
 )
 
+# Logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("api")
+
+# FastAPI App
+app = FastAPI(
+    title=APP_TITLE,
+    description=(
+        "Enterprise REST API for real-time supply chain monitoring, "
+        "ML-powered demand forecasting, and AI-driven risk analysis. "
+        "Built with FastAPI, XGBoost, and Pandas."
+    ),
+    version=APP_VERSION,
+    contact={"name": "Supply Chain AI Team", "email": "support@example.com"},
+    license_info={"name": "MIT"},
+)
+
+# CORS Middleware
+app.add_middleware(CORSMiddleware,
+    allow_origins=["http://localhost:8501","http://127.0.0.1:8501"],
+    allow_credentials=True, 
+    allow_methods=["*"], 
+    allow_headers=["*"]
+)
+
+# Security
+security = HTTPBearer(auto_error=False)
+
 # File Paths
-PROCESSED_DATA_DIR = 'dataset/processed files'
 DEMAND_FILE = os.path.join(PROCESSED_DATA_DIR, 'demand_predictions.csv')
 REORDER_FILE = os.path.join(PROCESSED_DATA_DIR, 'reorder_recommendations.csv')
 HEALTH_FILE = os.path.join(PROCESSED_DATA_DIR, 'supply_chain_health.csv')
-LIVE_INVENTORY_DIR = 'dataset/live_supply_chain'
-UPLOAD_DIR = 'dataset/uploads'
+UPLOAD_DIR = os.path.join(DATASET_DIR, 'uploads')
 
-# Ensure upload directory exists
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(PROCESSED_DATA_DIR, exist_ok=True)
 
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+
+
+# --- Auth Dependency ---
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Validate JWT token and return username. Returns None if no token provided."""
+    if credentials is None:
+        return None
+    try:
+        payload = verify_token(credentials.credentials)
+        return payload.get("sub")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+
+async def require_auth(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Require valid JWT token. Raises 401 if missing or invalid."""
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    try:
+        payload = verify_token(credentials.credentials)
+        return payload.get("sub")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+
+# --- Security Helpers ---
+import re
+
+def sanitize_filename(filename: str) -> str:
+    """Sanitize filename to prevent path traversal attacks."""
+    # Remove path separators and null bytes
+    name = os.path.basename(filename)
+    # Remove any remaining dangerous characters
+    name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', name)
+    # Prevent hidden files
+    name = name.lstrip('.')
+    if not name:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    return name
+
+
+def validate_workspace_path(base_dir: str, file_path: str) -> str:
+    """Validate that file_path stays within base_dir."""
+    abs_base = os.path.abspath(base_dir)
+    abs_path = os.path.abspath(file_path)
+    if not abs_path.startswith(abs_base + os.sep):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+    return abs_path
+
+
+# --- Helper ---
 def load_dataset(filepath: str) -> pd.DataFrame:
-    """Helper to load a CSV dataset"""
+    """Load a CSV dataset, raising 404 if not found."""
     if not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail=f"Dataset {filepath} not found. Please run the data pipelines first.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Dataset not found: {os.path.basename(filepath)}. Please upload data first."
+        )
     return pd.read_csv(filepath)
 
-@app.get("/")
+
+# ═══════════════════════════════════════════════════
+#            AUTHENTICATION ENDPOINTS
+# ═══════════════════════════════════════════════════
+
+@app.post("/api/v1/token", response_model=TokenResponse, tags=["Authentication"],
+          summary="Authenticate and receive JWT token")
+async def login(form: TokenRequest):
+    """
+    Authenticate with username and password.
+    Returns a JWT bearer token valid for 8 hours.
+    """
+    if not authenticate(form.username, form.password):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    token = create_access_token({"sub": form.username})
+    logger.info(f"User '{form.username}' authenticated successfully")
+    return TokenResponse(access_token=token, token_type="bearer", username=form.username)
+
+
+# ═══════════════════════════════════════════════════
+#              SYSTEM ENDPOINTS
+# ═══════════════════════════════════════════════════
+
+@app.get("/", tags=["System"])
 def read_root():
-    return {"message": "Welcome to the AI Supply Chain Control Tower API. Visit /docs for documentation."}
+    """Root endpoint with API information."""
+    return {
+        "message": "AI Supply Chain Control Tower API",
+        "version": APP_VERSION,
+        "docs": "/docs",
+        "health": "/api/v1/health",
+    }
 
-@app.get("/inventory", response_model=List[Dict])
+@app.get("/api/v1/health", response_model=HealthCheck, tags=["System"],
+         summary="Health check for Docker and monitoring")
+def health_check():
+    """Returns API health status, version, and current timestamp."""
+    return HealthCheck(
+        status="ok",
+        version=APP_VERSION,
+        timestamp=datetime.now(timezone.utc).isoformat()
+    )
+
+
+# ═══════════════════════════════════════════════════
+#           SUPPLY CHAIN DATA ENDPOINTS
+# ═══════════════════════════════════════════════════
+
+@app.get("/inventory", response_model=List[Dict], tags=["Supply Chain"],
+         summary="Get current inventory status")
 def get_inventory():
-    """Returns the current inventory status for all products."""
+    """Returns the current inventory status for all products including stock levels and days coverage."""
     df = load_dataset(DEMAND_FILE)
-    # Selecting relevant inventory columns
     inventory_cols = ['product_id', 'warehouse_id', 'current_stock', 'safety_stock', 'reorder_point', 'inventory_days']
-    return df[inventory_cols].to_dict(orient='records')
+    available_cols = [c for c in inventory_cols if c in df.columns]
+    return df[available_cols].fillna(0).to_dict(orient='records')
 
-@app.get("/demand_forecast", response_model=List[Dict])
+
+@app.get("/demand_forecast", response_model=List[Dict], tags=["Supply Chain"],
+         summary="Get ML demand predictions")
 def get_demand_forecast():
-    """Returns predicted demand for all products."""
+    """Returns XGBoost-predicted demand for all products with spike detection."""
     df = load_dataset(DEMAND_FILE)
     forecast_cols = ['product_id', 'predicted_demand', 'avg_daily_sales', 'demand_spike']
-    return df[forecast_cols].to_dict(orient='records')
+    available_cols = [c for c in forecast_cols if c in df.columns]
+    return df[available_cols].fillna(0).to_dict(orient='records')
 
-@app.get("/reorder_recommendations", response_model=List[Dict])
+
+@app.get("/reorder_recommendations", response_model=List[Dict], tags=["Supply Chain"],
+         summary="Get reorder recommendations")
 def get_reorder_recommendations():
-    """Returns reorder recommendations including quantities and lead times."""
+    """Returns reorder recommendations including quantities, lead times, and alert messages."""
     df = load_dataset(REORDER_FILE)
-    return df[['product_id', 'reorder_quantity', 'supplier_lead_time', 'alert_message']].to_dict(orient='records')
+    cols = ['product_id', 'reorder_quantity', 'supplier_lead_time', 'alert_message']
+    available_cols = [c for c in cols if c in df.columns]
+    return df[available_cols].fillna(0).to_dict(orient='records')
 
-@app.get("/alerts", response_model=List[Dict])
+
+@app.get("/alerts", response_model=List[Dict], tags=["Alerts"],
+         summary="Get urgent supply chain alerts")
 def get_alerts():
     """Returns urgent supply chain alerts for products at high risk of stockout."""
     df = load_dataset(REORDER_FILE)
     alerts_df = df[df['stockout_risk'] == True]
-    return alerts_df[['product_id', 'days_until_stockout', 'alert_message']].to_dict(orient='records')
+    cols = ['product_id', 'days_until_stockout', 'alert_message']
+    available_cols = [c for c in cols if c in df.columns]
+    return alerts_df[available_cols].to_dict(orient='records')
 
-@app.get("/health", response_model=List[Dict])
+
+@app.get("/health", response_model=List[Dict], tags=["Supply Chain"],
+         summary="Get supply chain health metrics")
 def get_health():
-    """Returns the supply chain health metrics and statuses."""
+    """Returns health scores and status (GOOD/WARNING/CRITICAL) for all products."""
     df = load_dataset(HEALTH_FILE)
-    return df.to_dict(orient='records')
+    return df.fillna(0).to_dict(orient='records')
 
-@app.get("/live_inventory", response_model=List[Dict])
+
+@app.get("/live_inventory", response_model=List[Dict], tags=["Supply Chain"],
+         summary="Get live streaming inventory data")
 def get_live_inventory():
     """Returns the latest entries from the live streaming supply chain data directory."""
-    live_dir = 'dataset/live_supply_chain'
+    live_dir = os.path.join(DATASET_DIR, 'live_supply_chain')
     if not os.path.exists(live_dir) or not os.path.isdir(live_dir):
         raise HTTPException(
-            status_code=404, 
+            status_code=404,
             detail="Live streaming data directory not found. Ensure the Spark streaming processor is running."
         )
     
     try:
-        # Get all CSV files in the directory
         files = [os.path.join(live_dir, f) for f in os.listdir(live_dir) if f.endswith('.csv')]
         if not files:
             return []
         
-        # Load and combine latest data (simplified: just read the most recent one for now or all)
-        # For simplicity in this dashboard context, we read existing ones
         dfs = [pd.read_csv(f) for f in files]
         if not dfs:
             return []
@@ -92,135 +255,173 @@ def get_live_inventory():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading live data: {str(e)}")
 
-@app.get("/live_alerts")
+
+@app.get("/live_alerts", response_model=List[Dict], tags=["Alerts"],
+         summary="Get live monitoring alerts")
 def get_live_alerts():
     """Returns the latest alerts from the supply chain monitoring system."""
-    import pandas as pd
-    import os
-
-    file_path = "dataset/live_alerts.csv"
-
+    file_path = os.path.join(DATASET_DIR, "live_alerts.csv")
     if not os.path.exists(file_path):
         return []
-
     try:
         df = pd.read_csv(file_path)
         return df.to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading alerts data: {str(e)}")
 
-@app.get("/supplier_performance")
-def get_supplier_performance():
-    """Endpoint to fetch supplier performance metrics."""
-    file_path = os.path.join(PROCESSED_DATA_DIR, "supplier_performance.csv")
 
+# ═══════════════════════════════════════════════════
+#         ANALYTICS & PERFORMANCE ENDPOINTS
+# ═══════════════════════════════════════════════════
+
+@app.get("/supplier_performance", response_model=List[Dict], tags=["Analytics"],
+         summary="Get supplier reliability metrics")
+def get_supplier_performance():
+    """Returns supplier performance metrics including reliability scores and delay rates."""
+    file_path = os.path.join(PROCESSED_DATA_DIR, "supplier_performance.csv")
     if not os.path.exists(file_path):
         return []
-
     try:
         df = pd.read_csv(file_path)
         return df.fillna(0).to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading supplier performance data: {str(e)}")
 
-@app.get("/warehouse_utilization")
-def get_warehouse_utilization():
-    """Endpoint to fetch warehouse utilization metrics."""
-    file_path = os.path.join(PROCESSED_DATA_DIR, "warehouse_utilization.csv")
 
+@app.get("/warehouse_utilization", response_model=List[Dict], tags=["Analytics"],
+         summary="Get warehouse capacity utilization")
+def get_warehouse_utilization():
+    """Returns warehouse utilization percentages and status classifications."""
+    file_path = os.path.join(PROCESSED_DATA_DIR, "warehouse_utilization.csv")
     if not os.path.exists(file_path):
         return []
-
     try:
         df = pd.read_csv(file_path)
         return df.fillna(0).to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading warehouse utilization data: {str(e)}")
 
-@app.get("/cost_analysis")
-def get_cost_analysis():
-    """Endpoint to fetch supply chain cost analysis."""
-    file_path = os.path.join(PROCESSED_DATA_DIR, "cost_analysis.csv")
 
+@app.get("/cost_analysis", response_model=List[Dict], tags=["Analytics"],
+         summary="Get cost impact analysis")
+def get_cost_analysis():
+    """Returns holding costs, stockout costs, and total financial impact per product."""
+    file_path = os.path.join(PROCESSED_DATA_DIR, "cost_analysis.csv")
     if not os.path.exists(file_path):
         return []
-
     try:
         df = pd.read_csv(file_path)
         return df.fillna(0).to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading cost analysis data: {str(e)}")
 
-@app.get("/global_risk_summary")
-def get_global_risk_summary():
-    """Endpoint to fetch aggregated global risk summary."""
-    file_path = os.path.join(PROCESSED_DATA_DIR, "global_risk_summary.csv")
 
+@app.get("/global_risk_summary", response_model=List[Dict], tags=["Analytics"],
+         summary="Get aggregated risk overview")
+def get_global_risk_summary():
+    """Returns aggregated global risk summary with counts of critical items across all dimensions."""
+    file_path = os.path.join(PROCESSED_DATA_DIR, "global_risk_summary.csv")
     if not os.path.exists(file_path):
         return []
-
     try:
         df = pd.read_csv(file_path)
         return df.fillna(0).to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading global risk summary: {str(e)}")
 
-@app.get("/daily_report")
-def get_daily_report():
-    """Endpoint to fetch the latest daily supply chain report."""
-    file_path = "reports/daily_supply_chain_report.csv"
 
+@app.get("/daily_report", response_model=List[Dict], tags=["Reports"],
+         summary="Get latest daily report")
+def get_daily_report():
+    """Returns the latest daily supply chain risk report summary."""
+    file_path = os.path.join(PROJECT_ROOT, "reports", "daily_supply_chain_report.csv")
     if not os.path.exists(file_path):
         return []
-
     try:
         df = pd.read_csv(file_path)
         return df.fillna(0).to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading daily report: {str(e)}")
 
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
-@app.post("/upload_data")
-async def upload_data(username: str, files: List[UploadFile] = File(...)):
-    """Endpoint to upload multiple supply chain data files to a user's workspace."""
-    workspace_dir = os.path.join("dataset", "workspaces", username)
+@app.get("/export/pdf", tags=["Reports"], summary="Download executive PDF report")
+def export_pdf(current_user: str = Depends(require_auth)):
+    """Generate and download a professional executive PDF report. Requires authentication."""
+    from fastapi.responses import FileResponse
+    try:
+        from reporting.daily_report_generator import generate_pdf_report
+        pdf_path = generate_pdf_report()
+        if pdf_path and os.path.exists(pdf_path):
+            return FileResponse(
+                pdf_path,
+                media_type="application/pdf",
+                filename=f"executive_report_{datetime.now().strftime('%Y%m%d')}.pdf"
+            )
+        raise HTTPException(status_code=500, detail="PDF generation failed")
+    except ImportError:
+        raise HTTPException(status_code=500, detail="reportlab not installed. Run: pip install reportlab")
+
+
+# ═══════════════════════════════════════════════════
+#          DATA MANAGEMENT ENDPOINTS
+# ═══════════════════════════════════════════════════
+
+@app.post("/upload_data", response_model=UploadResponse, tags=["Data Management"],
+          summary="Upload supply chain data files")
+async def upload_data(
+    files: List[UploadFile] = File(...),
+    current_user: str = Depends(require_auth)
+):
+    """
+    Upload multiple supply chain data files (CSV, Excel, JSON) to your workspace.
+    Files are automatically classified and trigger the analytics pipeline.
+    Maximum file size: 50MB per file. Requires authentication.
+    """
+    username = current_user
+    workspace_dir = os.path.join(DATASET_DIR, "workspaces", username)
     os.makedirs(workspace_dir, exist_ok=True)
-    
+
     saved_files = []
-    
+
     try:
         for file in files:
-            file_location = os.path.join(workspace_dir, file.filename)
-            
-            # Read and check size
+            # Sanitize filename to prevent path traversal
+            safe_filename = sanitize_filename(file.filename)
+            file_location = os.path.join(workspace_dir, safe_filename)
+            validate_workspace_path(workspace_dir, file_location)
+
             content = await file.read()
             if len(content) > MAX_FILE_SIZE:
-                 raise HTTPException(status_code=413, detail=f"File {file.filename} exceeds the 50MB size limit.")
-            
-            # Reset file pointer for writing (or just write content)
+                raise HTTPException(status_code=413, detail=f"File {safe_filename} exceeds the 50MB size limit.")
+
             with open(file_location, "wb") as buffer:
                 buffer.write(content)
-            
-            saved_files.append(file.filename)
-        
-        # Trigger the advanced processing pipeline
-        from backend.data_processor import process_uploaded_data
-        process_uploaded_data(username)
-        
-        return {
-            "message": f"Successfully uploaded {len(saved_files)} files and triggered processing for {username}",
-            "files": saved_files,
-            "workspace": username
-        }
+
+            saved_files.append(safe_filename)
+            logger.info(f"Uploaded {safe_filename} for user '{username}'")
+
+        # Trigger the pandas pipeline (no Spark needed)
+        from backend.pandas_processor import run_full_pipeline
+        result = run_full_pipeline(username)
+        if not result["success"]:
+            raise HTTPException(status_code=500, detail=result.get("error","Pipeline failed"))
+
+        return UploadResponse(
+            message=f"Successfully uploaded {len(saved_files)} files and triggered processing for {username}",
+            files=saved_files,
+            workspace=username
+        )
     except HTTPException as he:
         raise he
     except Exception as e:
+        logger.error(f"Upload error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error uploading or processing files: {str(e)}")
 
-@app.get("/workspace_files")
-def get_workspace_files(username: str):
-    """Returns a list of files in the user's workspace with metadata."""
+
+@app.get("/workspace_files", response_model=List[Dict], tags=["Data Management"],
+         summary="List workspace files with metadata")
+def get_workspace_files(current_user: str = Depends(require_auth)):
+    """Returns a list of files in your workspace with type detection metadata. Requires authentication."""
     meta_path = os.path.join(PROCESSED_DATA_DIR, "workspace_metadata.csv")
     if not os.path.exists(meta_path):
         return []
@@ -230,52 +431,143 @@ def get_workspace_files(username: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading workspace metadata: {str(e)}")
 
-@app.get("/data_explorer")
-def get_data_explorer(username: str, filename: str):
-    """Returns the content of a specific file in the workspace for preview."""
-    workspace_dir = os.path.join("dataset", "workspaces", username)
-    file_path = os.path.join(workspace_dir, filename)
-    
+
+@app.get("/data_explorer", response_model=List[Dict], tags=["Data Management"],
+         summary="Preview a workspace file")
+def get_data_explorer(filename: str = Query(...), current_user: str = Depends(require_auth)):
+    """Returns the first 1000 rows of a specific file for data preview. Requires authentication."""
+    # Sanitize filename to prevent path traversal
+    safe_filename = sanitize_filename(filename)
+    workspace_dir = os.path.join(DATASET_DIR, "workspaces", current_user)
+    file_path = os.path.join(workspace_dir, safe_filename)
+    validate_workspace_path(workspace_dir, file_path)
+
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
-        
+
     try:
-        # Load first 1000 rows for preview
-        if filename.endswith('.csv'):
+        if safe_filename.endswith('.csv'):
             df = pd.read_csv(file_path).head(1000)
-        elif filename.endswith('.xlsx'):
+        elif safe_filename.endswith('.xlsx'):
             df = pd.read_excel(file_path).head(1000)
-        elif filename.endswith('.json'):
+        elif safe_filename.endswith('.json'):
             df = pd.read_json(file_path).head(1000)
         else:
             raise HTTPException(status_code=400, detail="Unsupported file format")
-            
+
         return df.fillna("").to_dict(orient="records")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading file {filename}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
 
-@app.get("/admin/system_health")
-def get_system_health():
-    """Returns administrative system health metrics."""
-    return {
-        "status": "Healthy",
-        "api_version": "1.0.0",
-        "workspaces": len(os.listdir("dataset/workspaces")) if os.path.exists("dataset/workspaces") else 0,
-        "processed_files": len(os.listdir(PROCESSED_DATA_DIR)) if os.path.exists(PROCESSED_DATA_DIR) else 0,
-        "storage_usage_mb": 142.5 # Mock value for now
-    }
 
-@app.post("/admin/clear_workspace")
-def clear_workspace(username: str):
-    """Administrative action to clear a user's workspace data."""
-    workspace_dir = os.path.join("dataset", "workspaces", username)
+# ═══════════════════════════════════════════════════
+#          DATA QUALITY ENDPOINT
+# ═══════════════════════════════════════════════════
+
+@app.get("/data-quality", response_model=List[Dict], tags=["Data Management"],
+         summary="Get data quality analysis")
+def get_data_quality(current_user: str = Depends(require_auth)):
+    """Returns data quality analysis for all files in your workspace. Requires authentication."""
+    workspace_dir = os.path.join(DATASET_DIR, "workspaces", current_user)
+    if not os.path.exists(workspace_dir):
+        return []
+    
+    reports = []
+    for filename in os.listdir(workspace_dir):
+        if not filename.endswith(('.csv', '.xlsx', '.json')):
+            continue
+        
+        file_path = os.path.join(workspace_dir, filename)
+        try:
+            if filename.endswith('.csv'):
+                df = pd.read_csv(file_path)
+            elif filename.endswith('.xlsx'):
+                df = pd.read_excel(file_path)
+            else:
+                df = pd.read_json(file_path)
+            
+            null_counts = df.isnull().sum().to_dict()
+            null_pcts = {k: round(v / len(df) * 100, 1) for k, v in null_counts.items()} if len(df) > 0 else {}
+            duplicate_rows = int(df.duplicated().sum())
+            
+            # Quality score
+            total_cells = df.shape[0] * df.shape[1]
+            null_cells = sum(null_counts.values())
+            completeness = (1 - null_cells / total_cells) * 100 if total_cells > 0 else 100
+            uniqueness = (1 - duplicate_rows / len(df)) * 100 if len(df) > 0 else 100
+            quality_score = round((completeness * 0.7 + uniqueness * 0.3), 1)
+            
+            # Issues
+            issues = []
+            for col, pct in null_pcts.items():
+                if pct > 5:
+                    issues.append(f"Column '{col}' has {pct}% null values — recommend fill with default")
+            if duplicate_rows > 0:
+                issues.append(f"{duplicate_rows} duplicate rows detected")
+            
+            # Value range checks
+            for col in df.select_dtypes(include='number').columns:
+                if (df[col] < 0).any():
+                    issues.append(f"Column '{col}' contains negative values")
+            
+            reports.append({
+                "filename": filename,
+                "total_rows": len(df),
+                "total_columns": len(df.columns),
+                "columns": list(df.columns),
+                "null_counts": null_counts,
+                "null_percentages": null_pcts,
+                "duplicate_rows": duplicate_rows,
+                "quality_score": quality_score,
+                "issues": issues
+            })
+        except Exception as e:
+            reports.append({
+                "filename": filename,
+                "error": str(e),
+                "quality_score": 0
+            })
+    
+    return reports
+
+
+# ═══════════════════════════════════════════════════
+#          ADMIN ENDPOINTS
+# ═══════════════════════════════════════════════════
+
+@app.get("/admin/system_health", response_model=SystemHealth, tags=["Admin"],
+         summary="Get system health metrics")
+def get_system_health(current_user: str = Depends(require_auth)):
+    """Returns administrative system health metrics. Requires authentication."""
+    workspaces_dir = os.path.join(DATASET_DIR, "workspaces")
+    return SystemHealth(
+        status="Healthy",
+        api_version=APP_VERSION,
+        workspaces=len(os.listdir(workspaces_dir)) if os.path.exists(workspaces_dir) else 0,
+        processed_files=len(os.listdir(PROCESSED_DATA_DIR)) if os.path.exists(PROCESSED_DATA_DIR) else 0,
+        storage_usage_mb=round(sum(
+            os.path.getsize(os.path.join(dirpath, filename))
+            for dirpath, dirnames, filenames in os.walk(DATASET_DIR)
+            for filename in filenames
+        ) / (1024 * 1024), 2) if os.path.exists(DATASET_DIR) else 0
+    )
+
+
+@app.post("/admin/clear_workspace", tags=["Admin"],
+          summary="Clear user workspace data")
+def clear_workspace(current_user: str = Depends(require_auth)):
+    """Administrative action to clear all files in your workspace. Requires authentication."""
+    workspace_dir = os.path.join(DATASET_DIR, "workspaces", current_user)
     if os.path.exists(workspace_dir):
         shutil.rmtree(workspace_dir)
         os.makedirs(workspace_dir, exist_ok=True)
-        return {"message": f"Workspace {username} cleared successfully"}
+        logger.info(f"Workspace '{current_user}' cleared")
+        return {"message": f"Workspace {current_user} cleared successfully"}
     return {"message": "Workspace not found"}
+
 
 if __name__ == "__main__":
     import uvicorn
-    # In a real scenario, you'd use host="0.0.0.0" for external access
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host=API_HOST, port=API_PORT)
