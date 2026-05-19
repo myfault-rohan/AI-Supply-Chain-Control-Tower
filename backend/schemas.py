@@ -25,7 +25,24 @@ class TokenResponse(BaseModel):
     """JWT token response after successful authentication."""
     access_token: str
     token_type: str = "bearer"
+    expires_in: int | None = None
+    username: Optional[str] = None
+
+
+class UserCreate(BaseModel):
+    """Payload used when creating a new user."""
     username: str
+    email: Optional[str]
+    password: str
+
+
+class UserResponse(BaseModel):
+    """Response model for user objects."""
+    id: Optional[int]
+    username: str
+    email: Optional[str]
+    role: Optional[str] = "analyst"
+    is_active: bool = True
 
 
 class InventoryItem(BaseModel):

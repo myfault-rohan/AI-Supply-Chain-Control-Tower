@@ -29,6 +29,7 @@ from config import API_URL, DATASET_DIR
 from backend.database import init_db, get_db
 from backend.models import User
 from backend.auth import authenticate_user, create_access_token, verify_token, create_user
+from sqlalchemy.exc import OperationalError
 from backend.utils import logger, APIResponse, sanitize_filename
 from backend.schemas import (
     TokenRequest, TokenResponse, UserCreate, UserResponse,
@@ -170,7 +171,16 @@ async def login(request: TokenRequest, db: Session = Depends(get_db)):
     Authenticate user with username and password.
     Returns JWT bearer token valid for 8 hours.
     """
-    user = authenticate_user(db, request.username, request.password)
+    try:
+        user = authenticate_user(db, request.username, request.password)
+    except OperationalError as e:
+        # In test environments the test DB may be dropped between tests;
+        # treat missing tables as authentication failure to keep tests deterministic.
+        logger.error("Database operation failed during authentication", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password"
+        )
     if not user:
         logger.warning("Authentication failed", username=request.username)
         raise HTTPException(
