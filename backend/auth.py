@@ -1,48 +1,100 @@
-import json
-import os
+"""
+Authentication and JWT Token Management.
+Upgraded to use SQLAlchemy models instead of JSON files.
+"""
+
 from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 from config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRE_MINUTES
+from backend.models import User
 
+# ============================================================================
+# Password Hashing
+# ============================================================================
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def hash_password(plain): 
+
+def hash_password(plain: str) -> str:
+    """Hash a plaintext password using bcrypt."""
     return pwd_context.hash(plain)
 
-def verify_password(plain, hashed): 
+
+def verify_password(plain: str, hashed: str) -> bool:
+    """Verify a plaintext password against a hash."""
     return pwd_context.verify(plain, hashed)
 
-def load_users():
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(base_path, "database", "users.json")
-    if not os.path.exists(file_path): return []
-    with open(file_path) as f: return json.load(f)
 
-def save_users(users):
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(base_path, "database", "users.json")
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, "w") as f: json.dump(users, f, indent=2)
-
-def authenticate(username, password):
-    users = load_users()
-    for u in users:
-        if u["username"] == username and verify_password(password, u.get("password_hash", "")):
-            return True
-    return False
-
-def create_access_token(data: dict, expires_minutes: int = None):
+# ============================================================================
+# JWT Token Management
+# ============================================================================
+def create_access_token(data: dict, expires_minutes: int = None) -> str:
+    """Generate a JWT access token with expiration."""
     to_encode = data.copy()
-    expires = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes or JWT_EXPIRE_MINUTES)
+    expires = datetime.now(timezone.utc) + timedelta(
+        minutes=expires_minutes or JWT_EXPIRE_MINUTES
+    )
     to_encode.update({"exp": expires})
-    return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return encoded_jwt
 
-def verify_token(token: str):
+
+def verify_token(token: str) -> dict:
+    """
+    Verify and decode a JWT token.
+    Raises JWTError if token is invalid or expired.
+    """
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("sub") is None:
-            raise JWTError("Token missing 'sub'")
+        username: str = payload.get("sub")
+        if username is None:
+            raise JWTError("Token missing 'sub' claim")
         return payload
     except JWTError:
         raise
+
+
+# ============================================================================
+# User Authentication (Database-backed)
+# ============================================================================
+def authenticate_user(db: Session, username: str, password: str) -> User | None:
+    """
+    Authenticate user credentials against database.
+    Returns User object if valid, None otherwise.
+    """
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        return None
+    if not verify_password(password, user.password_hash):
+        return None
+    if not user.is_active:
+        return None
+    return user
+
+
+def get_user_by_username(db: Session, username: str) -> User | None:
+    """Retrieve user by username."""
+    return db.query(User).filter(User.username == username).first()
+
+
+def create_user(db: Session, username: str, email: str, password: str, role: str = "analyst") -> User:
+    """
+    Create a new user in the database.
+    Raises ValueError if username already exists.
+    """
+    existing_user = db.query(User).filter(User.username == username).first()
+    if existing_user:
+        raise ValueError(f"Username '{username}' already exists")
+    
+    new_user = User(
+        username=username,
+        email=email,
+        password_hash=hash_password(password),
+        role=role,
+        is_active=True
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
