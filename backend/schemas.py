@@ -5,7 +5,7 @@ Provides type-safe, documented response schemas for the FastAPI OpenAPI specific
 
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class HealthCheck(BaseModel):
@@ -42,6 +42,7 @@ class UserResponse(BaseModel):
     username: str
     email: Optional[str]
     role: Optional[str] = "analyst"
+    created_at: Optional[datetime] = None
     is_active: bool = True
 
 

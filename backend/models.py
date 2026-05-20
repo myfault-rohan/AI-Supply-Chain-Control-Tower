@@ -3,7 +3,7 @@ SQLAlchemy ORM Models for Supply Chain Platform.
 Includes: Users, Products, Suppliers, Inventory, Forecasts, Alerts.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from backend.database import Base
@@ -18,8 +18,8 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=True)
     role = Column(String(20), default="analyst")  # analyst, manager, admin
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     is_active = Column(Boolean, default=True)
 
     # Relationships
@@ -38,7 +38,7 @@ class DataUpload(Base):
     data_type = Column(String(50))  # inventory, sales, suppliers, etc.
     row_count = Column(Integer, default=0)
     column_count = Column(Integer, default=0)
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     processed = Column(Boolean, default=False)
     processing_error = Column(Text, nullable=True)
 
@@ -56,7 +56,7 @@ class Product(Base):
     safety_stock = Column(Float, default=0)
     reorder_point = Column(Float, default=0)
     warehouse_id = Column(String(50), nullable=True)
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     forecasts = relationship("Forecast", back_populates="product", cascade="all, delete-orphan")
@@ -92,7 +92,7 @@ class Forecast(Base):
     
     model_version = Column(String(20), default="v1.0")
     confidence_score = Column(Float, default=0.85)
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="forecasts")
     product = relationship("Product", back_populates="forecasts")
@@ -110,7 +110,7 @@ class Alert(Base):
     message = Column(Text, nullable=False)
     
     is_acknowledged = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     acknowledged_at = Column(DateTime, nullable=True)
 
     product = relationship("Product", back_populates="alerts")
@@ -128,7 +128,7 @@ class ReorderRecommendation(Base):
     stockout_risk = Column(Boolean, default=False)
     recommended_action = Column(Text, nullable=False)
     
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     priority = Column(Integer, default=0)  # 1=critical, 2=high, 3=medium
 
 
@@ -139,6 +139,6 @@ class SystemMetric(Base):
     id = Column(Integer, primary_key=True, index=True)
     metric_name = Column(String(100), nullable=False)
     metric_value = Column(Float, nullable=False)
-    recorded_at = Column(DateTime, default=datetime.utcnow, index=True)
+    recorded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     
     # Examples: api_response_time, db_query_time, forecast_accuracy, etc.

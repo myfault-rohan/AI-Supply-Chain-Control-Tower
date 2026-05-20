@@ -13,6 +13,7 @@ Phase 1 Focus: Core functionality, database integration, auth
 
 import os
 import sys
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -50,6 +51,21 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 # ============================================================================
+# Application Lifespan
+# ============================================================================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize database tables on application startup."""
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error("Database initialization failed", error=str(e))
+        raise
+    yield
+
+
+# ============================================================================
 # FastAPI Application Setup
 # ============================================================================
 app = FastAPI(
@@ -63,7 +79,8 @@ app = FastAPI(
     license_info={"name": "MIT"},
     docs_url="/api/docs",
     redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json"
+    openapi_url="/api/openapi.json",
+    lifespan=lifespan,
 )
 
 # CORS Middleware for Streamlit frontend
@@ -82,20 +99,6 @@ app.add_middleware(
 
 # Security scheme
 security = HTTPBearer(auto_error=False)
-
-
-# ============================================================================
-# Database Initialization on Startup
-# ============================================================================
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database tables on application startup."""
-    try:
-        init_db()
-        logger.info("Database initialized successfully")
-    except Exception as e:
-        logger.error("Database initialization failed", error=str(e))
-        raise
 
 
 # ============================================================================
@@ -270,15 +273,27 @@ async def upload_data(
             detail="No files provided"
         )
     
+    # Create user workspace directory
+    workspace_dir = os.path.join(UPLOAD_DIR, current_user)
+    os.makedirs(workspace_dir, exist_ok=True)
+    
     saved_files = []
     for file in files:
-        if file.size > MAX_FILE_SIZE:
+        # Read file content first to check size
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=f"File {file.filename} exceeds 50MB limit"
             )
         
         safe_name = sanitize_filename(file.filename)
+        file_path = os.path.join(workspace_dir, safe_name)
+        
+        # Write file to disk
+        with open(file_path, "wb") as f:
+            f.write(content)
+        
         saved_files.append(safe_name)
         logger.info("File uploaded", user=current_user, filename=safe_name)
     
@@ -325,7 +340,7 @@ async def get_forecasts(
 @app.get("/api/v1/alerts", tags=["Analytics"], summary="Get operational alerts")
 async def get_alerts(
     current_user: str = Depends(require_auth),
-    severity: str = Query("all", regex="^(critical|warning|info|all)$")
+    severity: str = Query("all", pattern="^(critical|warning|info|all)$")
 ):
     """Get supply chain alerts. Requires authentication."""
     logger.info("Alerts requested", user=current_user, severity=severity)

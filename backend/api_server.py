@@ -15,6 +15,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 
 # Add project root to path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -28,7 +29,8 @@ APP_TITLE = "AI Supply Chain Control Tower API"
 API_HOST = "127.0.0.1"
 API_PORT = 8000
 
-from backend.auth import authenticate, create_access_token, verify_token
+from backend.auth import authenticate_user, create_access_token, verify_token
+from backend.database import get_db
 from backend.schemas import (
     HealthCheck, TokenRequest, TokenResponse, UploadResponse,
     SystemHealth, DataQualityReport
@@ -139,12 +141,13 @@ def load_dataset(filepath: str) -> pd.DataFrame:
 
 @app.post("/api/v1/token", response_model=TokenResponse, tags=["Authentication"],
           summary="Authenticate and receive JWT token")
-async def login(form: TokenRequest):
+async def login(form: TokenRequest, db: Session = Depends(get_db)):
     """
     Authenticate with username and password.
     Returns a JWT bearer token valid for 8 hours.
     """
-    if not authenticate(form.username, form.password):
+    user = authenticate_user(db, form.username, form.password)
+    if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     token = create_access_token({"sub": form.username})

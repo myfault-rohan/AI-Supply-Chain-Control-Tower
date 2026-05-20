@@ -14,3 +14,16 @@ backend/database/users.json
 spark_debug*/
 spark_error*/
 spark_metrics*/
+
+# Database files
+*.db
+test.db
+
+# Virtual environments
+.venv/
+.venv*/
+
+# IDE
+.idea/
+.vscode/
+*.swp
