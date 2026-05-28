@@ -1,72 +1,129 @@
-# AI Supply Chain Control Tower
+# AI-Powered Supply Chain Analytics & Forecasting Platform
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688.svg?logo=fastapi)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.32.0-FF4B4B.svg?logo=streamlit)
-![Pandas](https://img.shields.io/badge/Pandas-2.2.2-150458.svg?logo=pandas)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Python](https://img.shields.io/badge/Python-3.11-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg?logo=fastapi)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.29.0-FF4B4B.svg?logo=streamlit)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0.23-red.svg)
+![XGBoost](https://img.shields.io/badge/XGBoost-2.0-blue.svg)
+![Prophet](https://img.shields.io/badge/Prophet-1.1-green.svg)
+![Redis](https://img.shields.io/badge/Redis-Cache-DC382D.svg?logo=redis)
 
-## Overview
+An enterprise-grade, multi-tenant AI Supply Chain Control Tower. It features a robust Python/FastAPI backend, Streamlit dashboard, and advanced ML forecasting (XGBoost + Prophet) with SHAP explainability.
 
-An enterprise-grade, multi-tenant AI Supply Chain Control Tower built with FastAPI and Streamlit. It features a robust Python/Pandas data processing engine that handles risk detection, inventory forecasting, supplier performance scoring, and warehouse utilization tracking. Includes an Anthropic-powered AI advisor and Monte Carlo simulation lab.
+---
 
-## Feature Status
+## 🌟 Key Features
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| **JWT Authentication** | Complete | Secure login and API protection via HS256 JWTs |
-| **Data Engine** | Complete | Python/Pandas based pure analytics pipeline |
-| **AI Advisor** | Complete | Integrated with Claude for live actionable insights |
-| **Simulation Lab** | Complete | Monte Carlo simulation with visual ROI impact |
-| **Executive PDF Export** | Complete | Live snapshot exporting via ReportLab |
-| **Data Quality Monitor** | Complete | Automated schema validation and suggestions |
-| **Multi-tenant UI** | Complete | Workspace-based file isolation and management |
-| **i18n (EN/JA)** | Complete | Dynamic language toggling across the dashboard |
+1. **Advanced Demand Forecasting**
+   - **XGBoost Regressor**: Engineered 14+ features (inventory pressure, delay risk) for daily sales.
+   - **Prophet (Time-Series)**: Captures weekly/monthly seasonality for daily demand forecasting.
+   - **Model Comparison**: Compare MAE, RMSE, and MAPE between models in real-time.
 
-## Quick Start
+2. **Explainable AI (XAI)**
+   - **SHAP Integration**: Visualizes feature importance and summary plots, breaking the "black box" of XGBoost so supply chain managers understand *why* a stockout is predicted.
 
-1. Install dependencies:
+3. **Data Analyst Tooling**
+   - **Analytical SQL Queries**: Built-in scripts for inventory turnover, risk ranking, and supplier delays.
+   - **Jupyter EDA Notebooks**: Deep dives into supplier reliability, stock distribution, and overall risk.
+   - **Faker Data Generation**: Instantly generate thousands of synthetic products, suppliers, and sales records for testing.
+
+4. **Enterprise Backend Architecture**
+   - **FastAPI**: Asynchronous API with JWT Authentication and structured error handling.
+   - **SQLAlchemy 2.0 & Alembic**: Database ORM and automated schema migrations.
+   - **Redis Caching**: Caches expensive API endpoints (e.g., dashboard KPIs) using `fastapi-cache2`.
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Backend API** | FastAPI, Pydantic, JWT Auth |
+| **Database** | SQLite (Phase 1) / PostgreSQL Ready, SQLAlchemy 2.0, Alembic |
+| **Caching** | Redis, fastapi-cache2 |
+| **Machine Learning** | XGBoost, Prophet, Scikit-Learn |
+| **Explainability** | SHAP, Matplotlib |
+| **Frontend UI** | Streamlit, Plotly, Pandas |
+| **Testing/Ops** | Pytest, Docker Compose |
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prerequisites
+- Python 3.11+
+- Redis Server (optional, but recommended for caching)
+- Git
+
+### 2. Installation
 ```bash
+git clone https://github.com/myfault-rohan/AI-Supply-Chain-Control-Tower.git
+cd AI-Supply-Chain-Control-Tower
+
+# Create Virtual Environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .\.venv\Scripts\activate
+
+# Install Dependencies
 pip install -r requirements.txt
 ```
 
-2. Configure Environment:
+### 3. Generate Data & Train Models
 ```bash
-cp .env.example .env
-# Generate a secure JWT secret:
-python -c "import secrets; print(f'JWT_SECRET={secrets.token_urlsafe(32)}')"
-# Add the output to your .env file, along with your Anthropic API key
+# Generate synthetic dataset (Sales, Suppliers, Products)
+python scripts/generate_synthetic_data.py
+
+# Train XGBoost model and generate SHAP explainers
+python ml_models/demand_forecaster.py
+
+# Train Prophet Time-Series model
+python ml_models/prophet_forecaster.py
 ```
 
-3. Launch System:
-```powershell
-.\start_system.ps1
+### 4. Database Setup
+```bash
+# Run Alembic migrations to initialize the database schema
+alembic upgrade head
 ```
-This will start both the FastAPI backend (Port 8000) and the Streamlit dashboard (Port 8501).
 
-## Environment Variables (.env)
+### 5. Launch the Platform
+```bash
+# Start Redis (if installed locally via Docker)
+docker run -d -p 6379:6379 redis
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `JWT_SECRET` | **Yes** | Secret key for JWT signature (generate with `secrets.token_urlsafe(32)`) |
-| `ANTHROPIC_API_KEY` | For AI features | API key for the AI Advisor |
-| `API_URL` | No (default: `http://127.0.0.1:8000`) | Backend connection URL for Streamlit |
-| `DATASET_DIR` | No (default: `dataset`) | Root path for workspaces and generated files |
-| `JWT_ALGORITHM` | No (default: `HS256`) | Hashing algorithm for tokens |
-| `JWT_EXPIRE_MINUTES` | No (default: `480`) | Token expiration duration (8 hours) |
+# Start FastAPI Backend (Port 8000)
+uvicorn backend.api_server_phase1:app --reload
 
-## API Reference
+# Start Streamlit Dashboard (Port 8501)
+# (Run in a new terminal)
+streamlit run dashboard/app.py
+```
 
-| Endpoint | Method | Description | Auth Required |
-|----------|--------|-------------|---------------|
-| `/api/v1/token` | `POST` | Exchange username/password for JWT | No |
-| `/upload_data` | `POST` | Upload CSV/JSON data into workspace | Yes |
-| `/export/pdf` | `GET` | Download executive summary PDF report | Yes |
-| `/api/v1/health` | `GET` | System health and API status check | No |
-| `/workspace_files` | `GET` | List files in your workspace | Yes |
-| `/data_explorer` | `GET` | Preview workspace file contents | Yes |
-| `/data-quality` | `GET` | Get data quality analysis | Yes |
-| `/admin/system_health` | `GET` | System metrics | Yes |
-| `/admin/clear_workspace` | `POST` | Clear your workspace | Yes |
-| `/global_risk_summary` | `GET` | Aggregated risk overview | No |
-| `/daily_report` | `GET` | Latest daily report | No |
+---
+
+## 📂 Project Structure
+
+```text
+AI-Supply-Chain-Control-Tower/
+├── alembic/                # Database migrations
+├── backend/                # FastAPI Application
+│   ├── api_server_phase1.py  # Main API Entrypoint
+│   ├── models.py           # SQLAlchemy Models
+│   ├── auth.py             # JWT Security
+│   └── database.py         # DB connection pool
+├── dashboard/              # Streamlit Frontend UI
+│   ├── app.py              # Main dashboard entrypoint
+│   └── pages/              # UI Tabs (Analytics, AI Advisor, ML Explainability)
+├── ml_models/              # Machine Learning Pipelines
+│   ├── demand_forecaster.py # XGBoost + SHAP
+│   └── prophet_forecaster.py# Prophet
+├── notebooks/              # Jupyter EDA Notebooks
+├── scripts/                # Data Generation & Utils
+├── sql/                    # Analytical SQL Queries
+└── tests/                  # Pytest suite
+```
+
+---
+
+## 🛡️ License
+MIT License
