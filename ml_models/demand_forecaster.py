@@ -21,6 +21,8 @@ import os
 import json
 import pickle
 from datetime import datetime
+import shap
+import matplotlib.pyplot as plt
 
 # Configuration
 INPUT_FILE = 'dataset/processed_supply_chain.csv'
@@ -173,6 +175,27 @@ def train_model(X, y):
     mae = mean_absolute_error(y_test, predictions)
     rmse = np.sqrt(mean_squared_error(y_test, predictions))
     r2 = r2_score(y_test, predictions) if len(y_test) > 1 else 0.0
+    
+    print("Generating SHAP explainability...")
+    explainer = shap.Explainer(model, X_train)
+    shap_values = explainer(X_test)
+    
+    # Ensure output dir exists for SHAP plots
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    # Save SHAP summary plot
+    plt.figure(figsize=(10, 8))
+    shap.summary_plot(shap_values, X_test, show=False)
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, 'shap_summary.png'))
+    plt.close()
+    
+    # Save SHAP feature importance plot
+    plt.figure(figsize=(10, 8))
+    shap.plots.bar(shap_values, show=False)
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, 'shap_importance.png'))
+    plt.close()
     
     # MAPE (handle zeros)
     mask = y_test != 0

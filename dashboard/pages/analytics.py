@@ -13,7 +13,7 @@ from dashboard.i18n import t
 st.title(t("analytics_title"))
 st.markdown(f"### {t('analytics_subtitle')}")
 
-tabs = st.tabs([t("tab_inventory"), t("tab_suppliers"), t("tab_warehouses"), t("tab_costs")])
+tabs = st.tabs([t("tab_inventory"), t("tab_suppliers"), t("tab_warehouses"), t("tab_costs"), "ML Explainability"])
 
 with tabs[0]:
     st.subheader(t("inventory_dist"))
@@ -67,3 +67,28 @@ with tabs[3]:
                            color='total_cost_impact', color_continuous_scale="Reds")
             st.plotly_chart(fig, use_container_width=True)
         st.dataframe(cost_df, use_container_width=True)
+
+with tabs[4]:
+    st.subheader("Model Explainability (SHAP)")
+    st.markdown("Understand what factors drive the demand forecasts and stockout risks.")
+    
+    from config import DATASET_DIR
+    processed_dir = os.path.join(DATASET_DIR, "processed files")
+    
+    shap_summary = os.path.join(processed_dir, "shap_summary.png")
+    shap_importance = os.path.join(processed_dir, "shap_importance.png")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**Feature Importance**")
+        if os.path.exists(shap_importance):
+            st.image(shap_importance, use_container_width=True)
+        else:
+            st.info("Run the ML forecasting pipeline to generate SHAP feature importance plots.")
+            
+    with col2:
+        st.markdown("**Summary Plot**")
+        if os.path.exists(shap_summary):
+            st.image(shap_summary, use_container_width=True)
+        else:
+            st.info("Run the ML forecasting pipeline to generate SHAP summary plots.")
