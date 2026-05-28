@@ -12,10 +12,13 @@ from datetime import datetime, timezone
 from typing import List, Dict, Optional
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Query
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Add project root to path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -52,6 +55,11 @@ app = FastAPI(
     contact={"name": "Supply Chain AI Team", "email": "support@example.com"},
     license_info={"name": "MIT"},
 )
+
+# Rate Limiting
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS Middleware
 app.add_middleware(CORSMiddleware,
@@ -141,7 +149,8 @@ def load_dataset(filepath: str) -> pd.DataFrame:
 
 @app.post("/api/v1/token", response_model=TokenResponse, tags=["Authentication"],
           summary="Authenticate and receive JWT token")
-async def login(form: TokenRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def login(request: Request, form: TokenRequest, db: Session = Depends(get_db)):
     """
     Authenticate with username and password.
     Returns a JWT bearer token valid for 8 hours.
@@ -160,7 +169,8 @@ async def login(form: TokenRequest, db: Session = Depends(get_db)):
 # ═══════════════════════════════════════════════════
 
 @app.get("/", tags=["System"])
-def read_root():
+@limiter.limit("60/minute")
+def read_root(request: Request):
     """Root endpoint with API information."""
     return {
         "message": "AI Supply Chain Control Tower API",
@@ -371,7 +381,9 @@ def export_pdf(current_user: str = Depends(require_auth)):
 
 @app.post("/upload_data", response_model=UploadResponse, tags=["Data Management"],
           summary="Upload supply chain data files")
+@limiter.limit("10/minute")
 async def upload_data(
+    request: Request,
     files: List[UploadFile] = File(...),
     current_user: str = Depends(require_auth)
 ):

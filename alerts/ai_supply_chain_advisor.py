@@ -84,17 +84,47 @@ def get_or_build_rag_index():
     _rag_index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
     return _rag_index
 
+import pydantic_ai
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
+class SupplyChainAdvice(BaseModel):
+    summary: str = Field(description="A concise summary of the answer to the user's question.")
+    action_items: List[str] = Field(description="List of recommended actions to take.")
+    risk_level: str = Field(description="The risk level associated with the current situation (LOW, MEDIUM, HIGH, CRITICAL).")
+    affected_products: Optional[List[str]] = Field(description="List of product IDs affected, if any.")
+
+# Create the PydanticAI Agent
+supply_chain_agent = pydantic_ai.Agent(
+    'anthropic:claude-3-haiku-20240307',
+    result_type=SupplyChainAdvice,
+    system_prompt=(
+        "You are an elite AI Supply Chain Advisor. You analyze supply chain data and provide actionable advice. "
+        "Always respond with structured data containing a summary, action items, risk level, and affected products."
+    )
+)
+
 def ask_supply_chain_question(question: str) -> str:
     """
-    Query the supply chain RAG pipeline.
+    Query the supply chain RAG pipeline and return a structured JSON response via PydanticAI.
     """
     if not ANTHROPIC_API_KEY:
-        return "Anthropic API key is not configured. Please set ANTHROPIC_API_KEY in .env."
+        return '{"error": "Anthropic API key is not configured. Please set ANTHROPIC_API_KEY in .env."}'
         
     try:
+        # First, retrieve relevant context using LlamaIndex RAG
         index = get_or_build_rag_index()
         query_engine = index.as_query_engine(similarity_top_k=3)
-        response = query_engine.query(question)
-        return str(response)
+        rag_context = query_engine.query(question)
+        
+        # Then, use PydanticAI to structure the response robustly
+        prompt = f"User Question: {question}\n\nContext from Database:\n{rag_context}"
+        
+        # We pass the api key to the model settings implicitly via env vars, 
+        # but pydantic_ai reads ANTHROPIC_API_KEY automatically.
+        result = supply_chain_agent.run_sync(prompt)
+        
+        # Return the structured JSON
+        return result.data.model_dump_json(indent=2)
     except Exception as e:
-        return f"Error contacting AI Advisor (RAG Pipeline): {e}"
+        return f'{{"error": "Error contacting AI Advisor (PydanticAI Pipeline): {e}"}}'

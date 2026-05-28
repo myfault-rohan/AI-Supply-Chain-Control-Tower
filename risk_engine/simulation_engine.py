@@ -73,3 +73,83 @@ def run_monte_carlo(df, delay_days=0, demand_spike=0, supplier_capacity=100, cos
         results.append(impact)
 
     return results
+
+# =====================================================================
+# SimPy Discrete-Event Simulation for Warehouse Operations
+# =====================================================================
+import simpy
+import random
+
+class WarehouseSimulation:
+    def __init__(self, env, num_docks, num_workers, capacity):
+        self.env = env
+        self.docks = simpy.Resource(env, num_docks)
+        self.workers = simpy.Resource(env, num_workers)
+        self.capacity = simpy.Container(env, init=capacity, capacity=capacity)
+        self.processed_shipments = 0
+        self.delayed_shipments = 0
+        self.backlog_time = 0.0
+
+    def process_shipment(self, name, size, processing_time):
+        arrival_time = self.env.now
+        
+        # Request a dock
+        with self.docks.request() as dock_req:
+            yield dock_req
+            
+            # Request workers to unload
+            with self.workers.request() as worker_req:
+                yield worker_req
+                
+                # Check if warehouse has capacity
+                if self.capacity.level - size < 0:
+                    self.delayed_shipments += 1
+                    # Wait for space (simplified, just dropping or logging delay here)
+                    wait_start = self.env.now
+                    yield self.env.timeout(2.0)  # wait 2 hours for space
+                    self.backlog_time += (self.env.now - wait_start)
+                else:
+                    # Put items in warehouse
+                    yield self.capacity.get(size)
+                    
+                # Unloading time
+                yield self.env.timeout(processing_time)
+                
+        finish_time = self.env.now
+        self.processed_shipments += 1
+        
+        # If it took more than 4 hours, consider it delayed
+        if (finish_time - arrival_time) > 4.0:
+            self.delayed_shipments += 1
+            self.backlog_time += (finish_time - arrival_time - 4.0)
+
+def shipment_generator(env, warehouse, shipment_rate, avg_size):
+    i = 0
+    while True:
+        yield env.timeout(random.expovariate(1.0 / shipment_rate))
+        i += 1
+        size = int(random.normalvariate(avg_size, avg_size * 0.2))
+        processing_time = random.uniform(1.0, 3.0)
+        env.process(warehouse.process_shipment(f"Shipment {i}", size, processing_time))
+
+def run_agent_based_simulation(days=30, docks=3, workers=10, capacity=10000, shipment_rate=2.0, avg_size=500):
+    """
+    Runs a discrete-event simulation of a warehouse using SimPy.
+    """
+    env = simpy.Environment()
+    warehouse = WarehouseSimulation(env, num_docks=docks, num_workers=workers, capacity=capacity)
+    
+    # Start the shipment generator
+    env.process(shipment_generator(env, warehouse, shipment_rate, avg_size))
+    
+    # Run the simulation
+    env.run(until=days * 24)  # run in hours
+    
+    return {
+        "days_simulated": days,
+        "processed_shipments": warehouse.processed_shipments,
+        "delayed_shipments": warehouse.delayed_shipments,
+        "total_backlog_hours": round(warehouse.backlog_time, 2),
+        "delay_rate": round(warehouse.delayed_shipments / max(1, warehouse.processed_shipments) * 100, 2)
+    }
+
