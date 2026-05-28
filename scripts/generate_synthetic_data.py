@@ -6,11 +6,18 @@ Usage: python scripts/generate_synthetic_data.py [--products N] [--days D]
 Files are written to the `DATASET_DIR` configured in `config.py` (default: dataset/).
 """
 import os
+import sys
 import csv
 import argparse
 import random
 from faker import Faker
 from datetime import date, timedelta
+
+# Ensure project root is on sys.path when executed from scripts folder
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from config import DATASET_DIR
 
 

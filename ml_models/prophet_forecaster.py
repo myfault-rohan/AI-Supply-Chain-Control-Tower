@@ -4,6 +4,7 @@ Trains Prophet models for individual products to forecast daily sales.
 Compares metrics against XGBoost and outputs to dataset/processed files/
 """
 
+import polars as pl
 import pandas as pd
 import numpy as np
 from prophet import Prophet
@@ -19,16 +20,23 @@ OUTPUT_FILE = os.path.join(OUTPUT_DIR, 'prophet_predictions.csv')
 METRICS_FILE = os.path.join(OUTPUT_DIR, 'model_metrics_prophet.json')
 
 def load_data(filepath):
-    print(f"Loading sales data from {filepath}...")
+    print(f"Loading sales data from {filepath} with Polars...")
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"Dataset not found at {filepath}")
     
-    df = pd.read_csv(filepath)
-    df['date'] = pd.to_datetime(df['date'])
+    # Use Polars for blazing fast I/O and aggregation
+    df = pl.read_csv(filepath)
     
-    # Aggregate daily sales per product
-    daily_sales = df.groupby(['date', 'product_id'])['quantity'].sum().reset_index()
-    return daily_sales
+    # Ensure date is parsed and group by date and product_id
+    # We cast to string first in case it's not, then parse, though read_csv might already parse it.
+    daily_sales_pl = (
+        df.with_columns(pl.col('date').cast(pl.Utf8).str.to_datetime("%Y-%m-%d", strict=False).cast(pl.Date))
+        .group_by(['date', 'product_id'])
+        .agg(pl.col('quantity').sum())
+    )
+    
+    # Convert to Pandas for Prophet
+    return daily_sales_pl.to_pandas()
 
 def train_and_evaluate(df):
     """Train Prophet on each product and evaluate on the last 14 days."""

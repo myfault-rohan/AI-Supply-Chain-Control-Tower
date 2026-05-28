@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import polars as pl
 import os, sys, requests, time
 from datetime import datetime
 
@@ -14,10 +15,16 @@ PROCESSED_DIR = os.path.join(DATASET_DIR, "processed files")
 
 st.title(t("overview"))
 
-# Fetch Global Risk Summary
+# Fetch Global Risk Summary using Polars for speed
 def load_df(name):
     p = os.path.join(PROCESSED_DIR, name)
-    return pd.read_csv(p) if os.path.exists(p) else pd.DataFrame()
+    if os.path.exists(p):
+        try:
+            return pl.read_csv(p).to_pandas()
+        except Exception as e:
+            st.error(f"Error loading {name}: {e}")
+            return pd.DataFrame()
+    return pd.DataFrame()
 
 risk_summary = load_df("global_risk_summary.csv")
 
