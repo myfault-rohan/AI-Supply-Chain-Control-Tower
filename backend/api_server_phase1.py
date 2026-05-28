@@ -20,6 +20,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.decorator import cache
+from redis import asyncio as aioredis
 
 # Add project root to path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -59,8 +63,14 @@ async def lifespan(app: FastAPI):
     try:
         init_db()
         logger.info("Database initialized successfully")
+        
+        # Initialize Redis Cache
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        redis = aioredis.from_url(redis_url, encoding="utf8", decode_responses=True)
+        FastAPICache.init(RedisBackend(redis), prefix="sc-cache")
+        logger.info("Redis cache configured")
     except Exception as e:
-        logger.error("Database initialization failed", error=str(e))
+        logger.error("Database or Cache initialization failed", error=str(e))
         raise
     yield
 
@@ -304,6 +314,7 @@ async def upload_data(
 
 
 @app.get("/api/v1/dashboard", tags=["Analytics"], summary="Get dashboard KPIs")
+@cache(expire=60)
 async def get_dashboard(
     current_user: str = Depends(require_auth),
     db: Session = Depends(get_db)

@@ -47,6 +47,7 @@ streamlit-autorefresh==0.0.1
 # Caching & Background Jobs
 # ============================================================================
 redis==5.0.1
+fastapi-cache2[redis]==0.2.2
 
 # ============================================================================
 # Data Generation (Faker for synthetic datasets)
