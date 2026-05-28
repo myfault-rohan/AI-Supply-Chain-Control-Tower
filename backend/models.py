@@ -74,7 +74,7 @@ class Supplier(Base):
     reliability_score = Column(Float, default=100)
     delay_rate = Column(Float, default=0)
     status = Column(String(20), default="ACTIVE")  # ACTIVE, INACTIVE, AT_RISK
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class Forecast(Base):
