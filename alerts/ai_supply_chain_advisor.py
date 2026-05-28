@@ -1,48 +1,100 @@
 import os
-import json
-import pandas as pd
-from anthropic import Anthropic
 import sys
+import polars as pl
+from dotenv import load_dotenv
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from config import DATASET_DIR
-from dotenv import load_dotenv
+
+# -------------------------------------------------------------------------
+# LlamaIndex & ChromaDB imports
+# -------------------------------------------------------------------------
+import chromadb
+from llama_index.core import VectorStoreIndex, Document, StorageContext, Settings
+from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.llms.anthropic import Anthropic
 
 load_dotenv()
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
-def ask_supply_chain_question(question: str) -> str:
-    if not ANTHROPIC_API_KEY:
-        return "Anthropic API key is not configured. Please set ANTHROPIC_API_KEY in .env."
+# Global cache for the RAG index
+_rag_index = None
+
+def get_or_build_rag_index():
+    global _rag_index
+    if _rag_index is not None:
+        return _rag_index
+        
+    # Configure LlamaIndex to use Anthropic
+    Settings.llm = Anthropic(model="claude-3-haiku-20240307", api_key=ANTHROPIC_API_KEY)
     
+    # Initialize ChromaDB Vector Store
+    chroma_db_path = os.path.join(DATASET_DIR, "chroma_db")
+    os.makedirs(chroma_db_path, exist_ok=True)
+    chroma_client = chromadb.PersistentClient(path=chroma_db_path)
+    chroma_collection = chroma_client.get_or_create_collection("supply_chain_knowledge")
+    
+    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+    storage_context = StorageContext.from_defaults(vector_store=vector_store)
+    
+    # If the collection already has documents, just load the index
+    if chroma_collection.count() > 0:
+        _rag_index = VectorStoreIndex.from_vector_store(vector_store, storage_context=storage_context)
+        return _rag_index
+        
+    # Otherwise, ingest CSV files using Polars
     processed_dir = os.path.join(DATASET_DIR, "processed files")
-    context_data = {}
-    for fname in ["supply_chain_health.csv", "reorder_recommendations.csv", "supplier_performance.csv", "cost_analysis.csv"]:
+    documents = []
+    
+    # In a real app we would read all reports, here we pick the key analytical outputs
+    files_to_ingest = [
+        "demand_predictions.csv", 
+        "prophet_predictions.csv", 
+        "supply_chain_health.csv"
+    ]
+    
+    for fname in files_to_ingest:
         fpath = os.path.join(processed_dir, fname)
         if os.path.exists(fpath):
             try:
-                df = pd.read_csv(fpath)
-                context_data[fname.replace('.csv', '')] = df.to_dict(orient="records")
-            except Exception:
-                pass
+                # Use Polars for blazing fast data loading (replaces Pandas)
+                df = pl.read_csv(fpath)
+                
+                # Convert Polars DataFrame to a text representation for RAG
+                records = df.to_dicts()
+                text_content = f"Source Document: {fname}\n\n"
+                
+                # To avoid giant documents, we could chunk them, but for this portfolio 
+                # we'll create one Document per file, and LlamaIndex handles chunking internally.
+                for row in records[:1000]:  # Limit to 1000 rows per file for prompt safety
+                    text_content += str(row) + "\n"
+                
+                documents.append(Document(text=text_content, metadata={"source": fname}))
+            except Exception as e:
+                print(f"Polars/RAG Error loading {fname}: {e}")
+                
+    if not documents:
+        # Fallback if no files exist yet
+        documents.append(Document(text="No supply chain data available yet. Please run the ML pipelines first.", metadata={"source": "system"}))
+        
+    # Build and persist the index to ChromaDB
+    _rag_index = VectorStoreIndex.from_documents(documents, storage_context=storage_context)
+    return _rag_index
 
-    context_json = json.dumps(context_data, default=str)[:80000] # safety limit
-
-    system_prompt = f"""You are an expert supply chain analyst.
-Here is live supply chain data: {context_json}.
-Answer with specific product IDs, numbers, and actionable recommendations."""
-
-    client = Anthropic(api_key=ANTHROPIC_API_KEY)
+def ask_supply_chain_question(question: str) -> str:
+    """
+    Query the supply chain RAG pipeline.
+    """
+    if not ANTHROPIC_API_KEY:
+        return "Anthropic API key is not configured. Please set ANTHROPIC_API_KEY in .env."
+        
     try:
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1000,
-            system=system_prompt,
-            messages=[{"role": "user", "content": question}]
-        )
-        return response.content[0].text
+        index = get_or_build_rag_index()
+        query_engine = index.as_query_engine(similarity_top_k=3)
+        response = query_engine.query(question)
+        return str(response)
     except Exception as e:
-        return f"Error contacting AI: {e}"
+        return f"Error contacting AI Advisor (RAG Pipeline): {e}"
