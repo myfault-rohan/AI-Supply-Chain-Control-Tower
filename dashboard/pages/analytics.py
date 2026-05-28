@@ -69,12 +69,43 @@ with tabs[3]:
         st.dataframe(cost_df, use_container_width=True)
 
 with tabs[4]:
-    st.subheader("Model Explainability (SHAP)")
-    st.markdown("Understand what factors drive the demand forecasts and stockout risks.")
+    st.subheader("Model Explainability & Comparison")
+    st.markdown("Understand what factors drive the demand forecasts and compare model performance.")
     
     from config import DATASET_DIR
+    import json
     processed_dir = os.path.join(DATASET_DIR, "processed files")
     
+    xgb_metrics_path = os.path.join(processed_dir, "model_metrics.json")
+    prophet_metrics_path = os.path.join(processed_dir, "model_metrics_prophet.json")
+    
+    st.markdown("### Model Performance Comparison")
+    col_x, col_p = st.columns(2)
+    
+    with col_x:
+        st.markdown("**XGBoost (Default)**")
+        if os.path.exists(xgb_metrics_path):
+            with open(xgb_metrics_path, 'r') as f:
+                xgb_metrics = json.load(f)
+            st.metric("MAE", xgb_metrics.get("mae", "N/A"))
+            st.metric("RMSE", xgb_metrics.get("rmse", "N/A"))
+            st.metric("MAPE", f"{xgb_metrics.get('mape', 'N/A')}%")
+        else:
+            st.info("Run XGBoost pipeline to see metrics.")
+            
+    with col_p:
+        st.markdown("**Prophet (Time-Series)**")
+        if os.path.exists(prophet_metrics_path):
+            with open(prophet_metrics_path, 'r') as f:
+                prophet_metrics = json.load(f)
+            st.metric("MAE", prophet_metrics.get("mae", "N/A"))
+            st.metric("RMSE", prophet_metrics.get("rmse", "N/A"))
+            st.metric("MAPE", f"{prophet_metrics.get('mape', 'N/A')}%")
+        else:
+            st.info("Run Prophet pipeline to see metrics.")
+            
+    st.markdown("---")
+    st.markdown("### XGBoost SHAP Explainability")
     shap_summary = os.path.join(processed_dir, "shap_summary.png")
     shap_importance = os.path.join(processed_dir, "shap_importance.png")
     
