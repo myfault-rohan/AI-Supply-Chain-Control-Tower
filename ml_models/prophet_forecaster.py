@@ -32,7 +32,7 @@ def load_data(filepath):
     daily_sales_pl = (
         df.with_columns(pl.col('date').cast(pl.Utf8).str.to_datetime("%Y-%m-%d", strict=False).cast(pl.Date))
         .group_by(['date', 'product_id'])
-        .agg(pl.col('quantity').sum())
+        .agg(pl.col('daily_sales').sum())
     )
     
     # Convert to Pandas for Prophet
@@ -48,7 +48,7 @@ def train_and_evaluate(df):
     
     for i, product in enumerate(products):
         pdf = df[df['product_id'] == product].copy()
-        pdf = pdf.rename(columns={'date': 'ds', 'quantity': 'y'})
+        pdf = pdf.rename(columns={'date': 'ds', 'daily_sales': 'y'})
         pdf = pdf.sort_values('ds')
         
         if len(pdf) < 30:

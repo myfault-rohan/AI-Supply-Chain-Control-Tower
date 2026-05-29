@@ -22,8 +22,17 @@ test.db
 # Virtual environments
 .venv/
 .venv*/
+venv/
+env/
+ENV/
+*.venv
 
 # IDE
 .idea/
 .vscode/
 *.swp
+
+# Auto-generated outputs and logs
+dataset/processed files/
+dataset/synthetic/
+lightning_logs/

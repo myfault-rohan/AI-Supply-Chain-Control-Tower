@@ -1,4 +1,6 @@
 warehouse_id,warehouse_location,capacity
-W1,Mumbai Terminal,20000
-W2,Delhi Terminal,18000
-W3,Chennai Terminal,15000
+WH-01,"Chicago, IL",79184
+WH-02,"Dallas, TX",56556
+WH-03,"Los Angeles, CA",122097
+WH-04,"New York, NY",114196
+WH-05,"Atlanta, GA",108513
