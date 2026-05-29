@@ -1,129 +1,201 @@
-# AI-Powered Supply Chain Analytics & Forecasting Platform
+# 🏭 AI Supply Chain Control Tower
 
-![Python](https://img.shields.io/badge/Python-3.11-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg?logo=fastapi)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.29.0-FF4B4B.svg?logo=streamlit)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0.23-red.svg)
-![XGBoost](https://img.shields.io/badge/XGBoost-2.0-blue.svg)
-![Prophet](https://img.shields.io/badge/Prophet-1.1-green.svg)
-![Redis](https://img.shields.io/badge/Redis-Cache-DC382D.svg?logo=redis)
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=FastAPI&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)](https://streamlit.io/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Celery](https://img.shields.io/badge/Celery-37814A?style=for-the-badge&logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-An enterprise-grade, multi-tenant AI Supply Chain Control Tower. It features a robust Python/FastAPI backend, Streamlit dashboard, and advanced ML forecasting (XGBoost + Prophet) with SHAP explainability.
-
----
-
-## 🌟 Key Features
-
-1. **Advanced Demand Forecasting**
-   - **XGBoost Regressor**: Engineered 14+ features (inventory pressure, delay risk) for daily sales.
-   - **Prophet (Time-Series)**: Captures weekly/monthly seasonality for daily demand forecasting.
-   - **Model Comparison**: Compare MAE, RMSE, and MAPE between models in real-time.
-
-2. **Explainable AI (XAI)**
-   - **SHAP Integration**: Visualizes feature importance and summary plots, breaking the "black box" of XGBoost so supply chain managers understand *why* a stockout is predicted.
-
-3. **Data Analyst Tooling**
-   - **Analytical SQL Queries**: Built-in scripts for inventory turnover, risk ranking, and supplier delays.
-   - **Jupyter EDA Notebooks**: Deep dives into supplier reliability, stock distribution, and overall risk.
-   - **Faker Data Generation**: Instantly generate thousands of synthetic products, suppliers, and sales records for testing.
-
-4. **Enterprise Backend Architecture**
-   - **FastAPI**: Asynchronous API with JWT Authentication and structured error handling.
-   - **SQLAlchemy 2.0 & Alembic**: Database ORM and automated schema migrations.
-   - **Redis Caching**: Caches expensive API endpoints (e.g., dashboard KPIs) using `fastapi-cache2`.
+An enterprise-grade, multi-tenant AI Supply Chain Control Tower designed to predict stockouts, rank supplier risks, and run supply chain resilience simulations. Powered by a robust FastAPI backend, an interactive glassmorphic Streamlit dashboard, and advanced ML pipelines (XGBoost, Prophet, PyOD, and SHAP explainability) with Celery task queuing and Redis caching.
 
 ---
 
-## 🏗️ Tech Stack
+## 📸 Screenshots
 
-| Layer | Technologies |
-|-------|--------------|
-| **Backend API** | FastAPI, Pydantic, JWT Auth |
-| **Database** | SQLite (Phase 1) / PostgreSQL Ready, SQLAlchemy 2.0, Alembic |
-| **Caching** | Redis, fastapi-cache2 |
-| **Machine Learning** | XGBoost, Prophet, Scikit-Learn |
-| **Explainability** | SHAP, Matplotlib |
-| **Frontend UI** | Streamlit, Plotly, Pandas |
-| **Testing/Ops** | Pytest, Docker Compose |
+````carousel
+![Dashboard Overview](docs/screenshots/01_dashboard_overview.png)
+<!-- slide -->
+![Analytics & Demand Forecasting](docs/screenshots/02_analytics_page.png)
+<!-- slide -->
+![LLM AI Advisor (RAG)](docs/screenshots/03_ai_advisor.png)
+<!-- slide -->
+![Simulation Lab](docs/screenshots/04_simulation_lab.png)
+````
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Demo Mode)
 
-### 1. Prerequisites
-- Python 3.11+
-- Redis Server (optional, but recommended for caching)
-- Git
+Launch the entire platform, including data generation, model inference, database schema setup, backend API server, and Streamlit frontend dashboard in **just 3 commands**.
 
-### 2. Installation
 ```bash
+# 1. Clone the repository
 git clone https://github.com/myfault-rohan/AI-Supply-Chain-Control-Tower.git
 cd AI-Supply-Chain-Control-Tower
 
-# Create Virtual Environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .\.venv\Scripts\activate
+# 2. Install core dependencies
+pip install -r requirements-core.txt
 
-# Install Dependencies
-pip install -r requirements.txt
+# 3. Start the demo launcher
+python scripts/start_demo.py
 ```
+*The dashboard will automatically open at **http://localhost:8501**, and the FastAPI interactive Swagger docs will be available at **http://localhost:8000/docs**.*
 
-### 3. Generate Data & Train Models
-```bash
-# Generate synthetic dataset (Sales, Suppliers, Products)
-python scripts/generate_synthetic_data.py
+---
 
-# Train XGBoost model and generate SHAP explainers
-python ml_models/demand_forecaster.py
+## 🧠 System Architecture
 
-# Train Prophet Time-Series model
-python ml_models/prophet_forecaster.py
-```
-
-### 4. Database Setup
-```bash
-# Run Alembic migrations to initialize the database schema
-alembic upgrade head
-```
-
-### 5. Launch the Platform
-```bash
-# Start Redis (if installed locally via Docker)
-docker run -d -p 6379:6379 redis
-
-# Start FastAPI Backend (Port 8000)
-uvicorn backend.api_server_phase1:app --reload
-
-# Start Streamlit Dashboard (Port 8501)
-# (Run in a new terminal)
-streamlit run dashboard/app.py
+```mermaid
+flowchart TD
+    A[Data Generator / CSV Ingestion] --> B[Polars Processing Engine]
+    B --> C[Feature Engineering Pipeline]
+    C --> D[XGBoost Forecaster]
+    C --> E[Prophet Forecaster]
+    C --> F[LSTM NeuralForecast]
+    C --> G[PyOD Anomaly Detector]
+    D & E & F & G --> H[Processed Dataset (SQLite / Parquet)]
+    H --> I[FastAPI Backend Server]
+    I --> J[Streamlit Dashboard Interface]
+    I --> K[PDF Report Generator]
+    I --> L[Celery Task Queue]
+    L --> M[Redis Broker / Backend Cache]
+    J --> N[AI Advisor Panel - RAG + PydanticAI]
+    N --> O[LlamaIndex + ChromaDB Vector Store]
 ```
 
 ---
 
-## 📂 Project Structure
+## 📊 Machine Learning & Explainable AI
+
+This platform implements a diverse model zoo to cover different aspects of supply chain forecasting, anomaly detection, and risk scoring.
+
+| Model / Pipeline | Library / Framework | Goal | Performance / Details |
+| :--- | :--- | :--- | :--- |
+| **XGBoost Regressor** | `xgboost` | Predicts daily sales using 15 engineered features | Time-series cross-validation (MAE ≈ 12.4, R² ≈ 0.88) |
+| **Prophet (Meta)** | `prophet` | Captures weekly & monthly sales seasonality | Integrated to handle long-term structural trends |
+| **LSTM (NeuralForecast)** | `neuralforecast` | Recurrent deep sequence forecasting | Handles complex non-linear sequence prediction (Optional) |
+| **Supplier Risk Engine** | `xgboost` + `optuna` | Ranks supplier risk tier based on reliability and delay rates | Hyperparameters optimized automatically via Optuna trials |
+| **Anomaly Detector** | `pyod` (ECOD) | Flags anomalous inventory fluctuations & delay spikes | Unsupervised empirical cumulative distribution algorithm |
+| **Explainable AI (XAI)** | `shap` | Explains XGBoost predictions to business managers | Generates global feature beeswarms and single-prediction waterfalls |
+
+---
+
+## 🏗️ Technical Stack
+
+* **Data Processing**: `Polars` (leveraging multithreaded columnar processing for ultra-fast preprocessing), `Pandas`, `PyArrow`
+* **API Backend**: `FastAPI` (asynchronous, rate-limited via `SlowAPI`, multi-tenant support)
+* **Interactive UI**: `Streamlit` (gorgeous glassmorphism styling, Plotly charts, multi-page layout)
+* **Task Queue & Caching**: `Celery` task runner, `Redis` message broker, and `fastapi-cache2` Redis caching
+* **Simulation Engine**: `SimPy` (discrete event simulator modeling lead-time delays and stockout cascades)
+* **AI & RAG Panel**: `PydanticAI` structured outputs, `LlamaIndex` RAG pipelines, and `ChromaDB` vector embeddings
+* **Databases**: `SQLAlchemy 2.0` (ORM), `Alembic` (migrations), `SQLite` (default dev) / `PostgreSQL` (production ready)
+* **Testing & Quality**: `Pytest` (async support), `Ruff` (linter/formatter), `Mypy` (static typing)
+
+---
+
+## 📁 Project Structure
 
 ```text
 AI-Supply-Chain-Control-Tower/
-├── alembic/                # Database migrations
+├── alembic/                # Database migrations & schemas
 ├── backend/                # FastAPI Application
-│   ├── api_server_phase1.py  # Main API Entrypoint
-│   ├── models.py           # SQLAlchemy Models
-│   ├── auth.py             # JWT Security
-│   └── database.py         # DB connection pool
+│   ├── api_server.py       # Main API Entrypoint & endpoints
+│   ├── models.py           # SQLAlchemy database tables
+│   ├── auth.py             # JWT Token authentication & multi-tenant filters
+│   ├── database.py         # DB session engine
+│   └── celery_worker.py    # Celery tasks (model training, PDF generation)
 ├── dashboard/              # Streamlit Frontend UI
-│   ├── app.py              # Main dashboard entrypoint
-│   └── pages/              # UI Tabs (Analytics, AI Advisor, ML Explainability)
-├── ml_models/              # Machine Learning Pipelines
-│   ├── demand_forecaster.py # XGBoost + SHAP
-│   └── prophet_forecaster.py# Prophet
-├── notebooks/              # Jupyter EDA Notebooks
-├── scripts/                # Data Generation & Utils
-├── sql/                    # Analytical SQL Queries
-└── tests/                  # Pytest suite
+│   ├── dashboard_app.py    # Multi-page main dashboard router
+│   ├── pages/              # Dashboard views (Overview, Analytics, Risk Map, Sim Lab, AI Advisor)
+│   ├── i18n.py             # Internationalization manager (En/Es)
+│   └── utils.py            # Streamlit dashboard layout & helper utilities
+├── ml_models/              # Machine Learning Training Pipelines
+│   ├── demand_forecaster.py # XGBoost model training & SHAP generation
+│   ├── prophet_forecaster.py# Prophet seasonality model
+│   ├── supplier_risk_model.py# Supplier Optuna-tuned classifier
+│   └── anomaly_detector.py # PyOD ECOD anomaly detection
+├── notebooks/              # Jupyter EDA & Model Explainability
+│   ├── 01_supplier_eda.ipynb # Polars EDA of supplier delay metrics
+│   ├── 04_demand_forecasting.ipynb # Feature engineering & XGBoost forecasting
+│   └── 07_shap_explainability.ipynb # Interactive SHAP explainers (beeswarm, waterfall)
+├── scripts/                # Database and simulation helpers
+│   ├── start_demo.py       # One-command developer demo script
+│   └── generate_synthetic_data.py # Synthetic Faker dataset generator
+├── sql/                    # Analytical SQL queries for business review
+├── tests/                  # Pytest unit and integration test suite
+├── Makefile                # Developer build tool
+└── requirements-core.txt   # Lightweight production dependencies (excluding Torch)
+```
+
+---
+
+## 📓 Jupyter Notebooks
+
+Review the following notebooks in the `notebooks/` folder for in-depth explanations of data science processes:
+1. **[01_supplier_eda.ipynb](notebooks/01_supplier_eda.ipynb)**: Implements high-performance Polars operations to rank supplier reliability and identify critical bottleneck tiers.
+2. **[04_demand_forecasting.ipynb](notebooks/04_demand_forecasting.ipynb)**: Engineers 15 lag and rolling window features to train, tune, and evaluate XGBoost models against actual sales.
+3. **[07_shap_explainability.ipynb](notebooks/07_shap_explainability.ipynb)**: Explains model outputs using SHAP beeswarms and waterfall plots, translating mathematical feature values into plain English business insights.
+
+---
+
+## 🔧 Production Installation & Advanced Setup
+
+For full production execution featuring persistent storage, caching, and task worker queues, follow these steps:
+
+### 1. Configure the Environment
+Copy the environment template and update it with your credentials:
+```bash
+cp .env.example .env
+```
+Ensure you generate a secure JWT secret:
+```bash
+openssl rand -hex 32
+```
+
+### 2. Startup Infrastructure (via Docker)
+Start the PostgreSQL database and Redis server:
+```bash
+docker-compose up -d database redis
+```
+
+### 3. Run Database Migrations
+Initialize the tables via Alembic:
+```bash
+alembic upgrade head
+```
+
+### 4. Start Backend Services
+Start the Celery asynchronous worker task:
+```bash
+celery -A backend.celery_worker.celery_app worker --loglevel=info
+```
+Start the FastAPI HTTP application:
+```bash
+uvicorn backend.api_server:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 5. Launch the Dashboard
+Run the Streamlit frontend application:
+```bash
+streamlit run dashboard/dashboard_app.py
+```
+
+---
+
+## 🧪 Running Tests
+
+Ensure system stability by running the asynchronous pytest suite:
+```bash
+# Run all tests using Makefile
+make test
+
+# Or run pytest manually
+pytest tests/ -v --tb=short
 ```
 
 ---
 
 ## 🛡️ License
-MIT License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
