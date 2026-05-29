@@ -18,10 +18,11 @@ FROM
 -- Assuming a mapping exists between product and supplier. If not directly linked in schema, 
 -- this query serves as a conceptual template for the data analyst to use when the mapping table exists.
 -- For this schema, we simulate the join or join on a common attribute if one is added (e.g., primary_supplier_id in products).
-CROSS JOIN 
-    suppliers s 
+LEFT JOIN 
+    suppliers s ON r.primary_supplier_id = s.supplier_id
 WHERE 
-    r.stockout_risk = 1 AND s.status = 'AT_RISK'
+    r.stockout_risk = 1
+    AND (s.status = 'AT_RISK' OR s.delay_rate > 0.3)
 ORDER BY 
     r.priority DESC, 
     adjusted_expected_lead_time DESC

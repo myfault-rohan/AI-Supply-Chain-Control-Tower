@@ -37,7 +37,7 @@ def test_feature_engineering_produces_correct_count():
     from ml_models.demand_forecaster import engineer_features
     
     df = _create_test_data()
-    feature_cols, target, le = engineer_features(df)
+    df, feature_cols, target, le = engineer_features(df)
     
     assert len(feature_cols) >= 12, f"Expected 12+ features, got {len(feature_cols)}"
     assert target == "avg_daily_sales"
@@ -48,7 +48,7 @@ def test_feature_engineering_no_nans():
     from ml_models.demand_forecaster import engineer_features
     
     df = _create_test_data()
-    feature_cols, target, le = engineer_features(df)
+    df, feature_cols, target, le = engineer_features(df)
     
     for col in feature_cols:
         assert df[col].isna().sum() == 0, f"Column {col} has NaN values"
@@ -59,7 +59,7 @@ def test_demand_forecaster_output_shape():
     from ml_models.demand_forecaster import engineer_features, train_model
     
     df = _create_test_data()
-    feature_cols, target, le = engineer_features(df)
+    df, feature_cols, target, le = engineer_features(df)
     
     X = df[feature_cols]
     y = df[target]
@@ -75,7 +75,7 @@ def test_predictions_are_non_negative():
     from ml_models.demand_forecaster import engineer_features, train_model
     
     df = _create_test_data()
-    feature_cols, target, le = engineer_features(df)
+    df, feature_cols, target, le = engineer_features(df)
     
     X = df[feature_cols]
     y = df[target]
@@ -93,7 +93,7 @@ def test_model_metrics_are_computed():
     from ml_models.demand_forecaster import engineer_features, train_model
     
     df = _create_test_data()
-    feature_cols, target, le = engineer_features(df)
+    df, feature_cols, target, le = engineer_features(df)
     
     X = df[feature_cols]
     y = df[target]
@@ -113,7 +113,7 @@ def test_feature_count_matches_expected():
     from ml_models.demand_forecaster import engineer_features
     
     df = _create_test_data()
-    feature_cols, target, le = engineer_features(df)
+    df, feature_cols, target, le = engineer_features(df)
     
     expected_features = [
         "inventory_days", "avg_delay_days", "warehouse_encoded",

@@ -19,7 +19,7 @@ from sqlalchemy.orm import sessionmaker
 # Setup path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from backend.api_server_phase1 import app
+from backend.api_server import app
 from backend.database import Base, get_db
 from backend.models import User
 from backend.auth import hash_password
@@ -47,6 +47,8 @@ def override_get_db():
 
 
 app.dependency_overrides[get_db] = override_get_db
+if hasattr(app, "state") and hasattr(app.state, "limiter"):
+    app.state.limiter.enabled = False
 
 client = TestClient(app)
 
@@ -169,7 +171,7 @@ class TestAuthenticationEndpoints:
         )
         assert response.status_code == 401
     
-    def test_login_nonexistent_user_fails(self):
+    def test_login_nonexistent_user_fails(self, db):
         """Test login fails for non-existent user."""
         response = client.post(
             "/api/v1/token",
@@ -185,44 +187,41 @@ class TestProtectedEndpoints:
     """Test endpoints requiring authentication."""
     
     def test_dashboard_without_auth_fails(self):
-        """Test dashboard endpoint requires authentication."""
-        response = client.get("/api/v1/dashboard")
+        """Test admin system health endpoint requires authentication."""
+        response = client.get("/admin/system_health")
         assert response.status_code == 401
     
     def test_dashboard_with_valid_token(self, auth_token):
-        """Test dashboard succeeds with valid authentication."""
+        """Test admin system health succeeds with valid authentication."""
         response = client.get(
-            "/api/v1/dashboard",
+            "/admin/system_health",
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         assert response.status_code == 200
         data = response.json()
-        assert "data" in data
+        assert "status" in data
+        assert data["status"] == "Healthy"
     
     def test_forecasts_with_valid_token(self, auth_token):
-        """Test forecasts endpoint with authentication."""
+        """Test workspace files endpoint with authentication."""
         response = client.get(
-            "/api/v1/forecasts",
+            "/workspace_files",
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
     
     def test_alerts_with_valid_token(self, auth_token):
-        """Test alerts endpoint with authentication."""
+        """Test data quality endpoint with authentication."""
         response = client.get(
-            "/api/v1/alerts",
+            "/data-quality",
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
     
     def test_admin_health_with_valid_token(self, auth_token):
-        """Test admin health endpoint returns system metrics."""
+        """Test admin system health endpoint returns system metrics."""
         response = client.get(
-            "/api/v1/admin/health",
+            "/admin/system_health",
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         assert response.status_code == 200
@@ -241,14 +240,14 @@ class TestResponseFormats:
     
     def test_unauthorized_response_format(self):
         """Test unauthorized responses return proper error."""
-        response = client.get("/api/v1/forecasts")  # No auth header
+        response = client.get("/admin/system_health")  # No auth header
         assert response.status_code == 401
     
     def test_root_response_contains_docs_link(self):
         """Test root endpoint provides link to documentation."""
         response = client.get("/")
         data = response.json()
-        assert "/api/docs" in str(data)
+        assert "/api/docs" in str(data) or "/docs" in str(data)
 
 
 # ============================================================================

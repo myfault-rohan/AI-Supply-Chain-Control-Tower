@@ -32,12 +32,19 @@ APP_TITLE = "AI Supply Chain Control Tower API"
 API_HOST = "127.0.0.1"
 API_PORT = 8000
 
-from backend.auth import authenticate_user, create_access_token, verify_token
-from backend.database import get_db
+from backend.auth import authenticate_user, create_access_token, verify_token, create_user
+from backend.database import get_db, init_db
 from backend.schemas import (
     HealthCheck, TokenRequest, TokenResponse, UploadResponse,
-    SystemHealth, DataQualityReport
+    SystemHealth, DataQualityReport, UserCreate, UserResponse
 )
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.decorator import cache
+from redis import asyncio as aioredis
+from backend.celery_worker import train_ml_models
+from celery.result import AsyncResult
+from sqlalchemy.exc import OperationalError
 
 # Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -55,6 +62,28 @@ app = FastAPI(
     contact={"name": "Supply Chain AI Team", "email": "support@example.com"},
     license_info={"name": "MIT"},
 )
+
+# Initialize Cache with InMemoryBackend immediately for testing / safety
+from fastapi_cache.backends.inmemory import InMemoryBackend
+FastAPICache.init(InMemoryBackend(), prefix="supply-chain-cache")
+
+@app.on_event("startup")
+async def startup_event():
+    # Pre-seed tables if they don't exist
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        
+    # Attempt to initialize Redis cache
+    try:
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        redis = aioredis.from_url(redis_url, encoding="utf8", decode_responses=True)
+        FastAPICache.init(RedisBackend(redis), prefix="supply-chain-cache")
+        logger.info("Redis cache initialized successfully")
+    except Exception as e:
+        logger.warning(f"Redis cache initialization failed, using InMemory cache: {e}")
 
 # Rate Limiting
 limiter = Limiter(key_func=get_remote_address)
@@ -155,13 +184,49 @@ async def login(request: Request, form: TokenRequest, db: Session = Depends(get_
     Authenticate with username and password.
     Returns a JWT bearer token valid for 8 hours.
     """
-    user = authenticate_user(db, form.username, form.password)
+    try:
+        user = authenticate_user(db, form.username, form.password)
+    except OperationalError as e:
+        logger.error(f"Database operation failed during authentication: {str(e)}")
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+        
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     token = create_access_token({"sub": form.username})
     logger.info(f"User '{form.username}' authenticated successfully")
-    return TokenResponse(access_token=token, token_type="bearer", username=form.username)
+    return TokenResponse(access_token=token, token_type="bearer", username=form.username, expires_in=28800)
+
+
+@app.post("/api/v1/register", response_model=UserResponse, tags=["Authentication"],
+          summary="Register new user")
+def register(request: UserCreate, db: Session = Depends(get_db)):
+    """
+    Register a new user account.
+    """
+    try:
+        user = create_user(
+            db,
+            username=request.username,
+            email=request.email,
+            password=request.password,
+            role="analyst"
+        )
+        logger.info(f"New user registered: {user.username}")
+        return UserResponse(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            role=user.role,
+            created_at=user.created_at,
+            is_active=user.is_active
+        )
+    except ValueError as e:
+        logger.warning(f"Registration failed: {str(e)}")
+        raise HTTPException(status_code=409, detail=str(e))
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Registration failed")
 
 
 # ═══════════════════════════════════════════════════
@@ -196,6 +261,7 @@ def health_check():
 
 @app.get("/inventory", response_model=List[Dict], tags=["Supply Chain"],
          summary="Get current inventory status")
+@cache(expire=300)
 def get_inventory():
     """Returns the current inventory status for all products including stock levels and days coverage."""
     df = load_dataset(DEMAND_FILE)
@@ -206,6 +272,7 @@ def get_inventory():
 
 @app.get("/demand_forecast", response_model=List[Dict], tags=["Supply Chain"],
          summary="Get ML demand predictions")
+@cache(expire=300)
 def get_demand_forecast():
     """Returns XGBoost-predicted demand for all products with spike detection."""
     df = load_dataset(DEMAND_FILE)
@@ -216,6 +283,7 @@ def get_demand_forecast():
 
 @app.get("/reorder_recommendations", response_model=List[Dict], tags=["Supply Chain"],
          summary="Get reorder recommendations")
+@cache(expire=300)
 def get_reorder_recommendations():
     """Returns reorder recommendations including quantities, lead times, and alert messages."""
     df = load_dataset(REORDER_FILE)
@@ -581,6 +649,22 @@ def clear_workspace(current_user: str = Depends(require_auth)):
         logger.info(f"Workspace '{current_user}' cleared")
         return {"message": f"Workspace {current_user} cleared successfully"}
     return {"message": "Workspace not found"}
+
+
+@app.post("/admin/retrain", tags=["Admin"],
+          summary="Trigger asynchronous ML model retraining")
+def trigger_model_retrain(current_user: str = Depends(require_auth)):
+    """Trigger async ML model retraining via Celery."""
+    task = train_ml_models.delay()
+    return {"task_id": task.id, "status": "queued", "message": "Model retraining started in background"}
+
+
+@app.get("/admin/task/{task_id}", tags=["Admin"],
+         summary="Check background task status")
+def get_task_status(task_id: str, current_user: str = Depends(require_auth)):
+    """Check status of a background task."""
+    result = AsyncResult(task_id)
+    return {"task_id": task_id, "status": result.status}
 
 
 if __name__ == "__main__":

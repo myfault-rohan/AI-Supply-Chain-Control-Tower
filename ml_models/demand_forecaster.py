@@ -46,6 +46,11 @@ def engineer_features(df):
     """Create 12+ engineered features using Blazing Fast Polars Expressions"""
     print("Engineering features using Polars...")
     
+    import pandas as pd
+    is_pandas = isinstance(df, pd.DataFrame)
+    if is_pandas:
+        df = pl.from_pandas(df)
+        
     cols = df.columns
     
     # Ensure required base columns exist with defaults
@@ -144,6 +149,8 @@ def engineer_features(df):
     df = df.with_columns(pl.col(target).cast(pl.Float64, strict=False).fill_null(0.0).fill_nan(0.0))
     
     print(f"  Created {len(feature_cols)} features")
+    if is_pandas:
+        df = df.to_pandas()
     return df, feature_cols, target, le
 
 def train_model(X_pd, y_pd):
