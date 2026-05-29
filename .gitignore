@@ -35,4 +35,10 @@ ENV/
 # Auto-generated outputs and logs
 dataset/processed files/
 dataset/synthetic/
+dataset/stream_checkpoint/
+dataset/*.csv
+dataset/stream_*.csv
+!dataset/sample/
+!dataset/demo_data/
+*.crc
 lightning_logs/

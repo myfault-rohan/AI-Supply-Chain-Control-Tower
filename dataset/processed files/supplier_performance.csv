@@ -1,4 +1,0 @@
-supplier_id,average_delay,total_shipments,on_time_shipments,reliability_score,delay_rate,supplier_status,supplier_name
-S1,0.5,2,1,50.0,50.0,CRITICAL,Saudi Supplier
-S2,0.0,1,1,100.0,0.0,GOOD,UAE Supplier
-S3,3.0,1,0,0.0,100.0,CRITICAL,Russia Supplier

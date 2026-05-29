@@ -1,6 +1,0 @@
-filename,type,rows,cols
-inventory.csv,generic,106367,15
-sales.csv,sales,8,4
-shipments.csv,shipments,4,7
-suppliers.csv,suppliers,3,4
-warehouses.csv,warehouses,3,3

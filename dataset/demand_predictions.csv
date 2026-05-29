@@ -1,6 +1,0 @@
-product_id,product_name,warehouse_id,current_stock,safety_stock,reorder_point,daily_demand,avg_daily_sales,avg_delay_days,inventory_days,predicted_demand,demand_spike,days_until_stockout
-101,Crude Oil,W1,12000,3000,5000,1200,1250.0,1.0,9.6,1277.91,False,9.39
-102,Diesel,W2,8500,2000,4000,900,925.0,0.0,9.19,943.61,False,9.01
-103,Petrol,W3,9000,2500,4500,1100,1075.0,3.0,8.37,1133.8,False,7.94
-104,Jet Fuel,W1,4000,1500,3000,500,500.0,0.0,8.0,495.37,False,8.07
-105,LPG,W2,3000,1000,2000,450,450.0,3.0,6.67,488.8,False,6.14

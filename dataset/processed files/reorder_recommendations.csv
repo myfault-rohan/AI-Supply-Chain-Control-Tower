@@ -1,6 +1,0 @@
-product_id,current_stock,predicted_demand,days_until_stockout,reorder_quantity,supplier_lead_time,stockout_risk,alert_message
-101,12000,1277.91,9.39,3779.0,10.0,True,WARNING: Reorder 101 - 9.4 days left.
-102,8500,943.61,9.01,1049.0,8.0,False,OK: 102 has sufficient stock.
-103,9000,1133.8,7.94,10507.0,15.0,True,WARNING: Reorder 103 - 7.9 days left.
-104,4000,495.37,8.07,2454.0,10.0,True,WARNING: Reorder 104 - 8.1 days left.
-105,3000,488.8,6.14,1422.0,7.0,True,WARNING: Reorder 105 - 6.1 days left.
