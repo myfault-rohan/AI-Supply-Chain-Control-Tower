@@ -15,13 +15,14 @@ sqlalchemy==2.0.23
 bcrypt==4.1.1
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
+cryptography==41.0.7
 
 # Rate limiting
 slowapi==0.1.9
 
 # Caching (api_server imports fastapi_cache + redis at module level)
 fastapi-cache2[redis]==0.2.2
-redis==5.0.1
+redis==4.5.5
 
 # Background tasks (api_server imports celery at module level)
 celery==5.4.0
@@ -29,10 +30,14 @@ celery==5.4.0
 # Data
 pandas==2.1.3
 numpy==1.26.2
+polars==0.19.12
+pyarrow==14.0.0
 
 # ML (test_ml.py needs these)
 scikit-learn==1.3.2
 xgboost==2.0.3
+shap==0.43.0
+matplotlib==3.8.2
 
 # HTTP
 httpx==0.25.1
