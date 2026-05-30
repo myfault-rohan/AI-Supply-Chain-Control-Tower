@@ -22,6 +22,9 @@ import os
 import json
 import pickle
 from datetime import datetime
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import shap
 import matplotlib.pyplot as plt
 
