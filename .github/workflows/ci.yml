@@ -10,6 +10,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       JWT_SECRET: "ci-test-only-insecure-secret-do-not-use-in-production"
       API_URL: "http://127.0.0.1:8000"
