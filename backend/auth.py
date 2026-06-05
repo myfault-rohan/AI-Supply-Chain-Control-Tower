@@ -3,6 +3,11 @@ Authentication and JWT Token Management.
 Upgraded to use SQLAlchemy models instead of JSON files.
 """
 
+from datetime import datetime, timedelta, timezone
+from sqlalchemy.orm import Session
+from jose import JWTError, jwt
+from config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRE_MINUTES
+from backend.models import User
 import bcrypt as _bcrypt
 
 # ============================================================================
