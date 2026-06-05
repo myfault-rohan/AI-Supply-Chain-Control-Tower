@@ -3,27 +3,23 @@ Authentication and JWT Token Management.
 Upgraded to use SQLAlchemy models instead of JSON files.
 """
 
-from datetime import datetime, timedelta, timezone
-from passlib.context import CryptContext
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
-from config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRE_MINUTES
-from backend.models import User
+import bcrypt as _bcrypt
 
 # ============================================================================
-# Password Hashing
+# Password Hashing  (direct bcrypt — passlib not used as it breaks on bcrypt 4.x)
 # ============================================================================
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(plain: str) -> str:
     """Hash a plaintext password using bcrypt."""
-    return pwd_context.hash(plain)
+    return _bcrypt.hashpw(plain.encode(), _bcrypt.gensalt()).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    """Verify a plaintext password against a hash."""
-    return pwd_context.verify(plain, hashed)
+    """Verify a plaintext password against a bcrypt hash."""
+    try:
+        return _bcrypt.checkpw(plain.encode(), hashed.encode())
+    except Exception:
+        return False
 
 
 # ============================================================================
