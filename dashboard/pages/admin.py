@@ -9,11 +9,11 @@ if PROJECT_ROOT not in sys.path:
 from dashboard.utils import API_URL, api_get, api_post
 from dashboard.i18n import t
 
-st.title(t("admin_title"))
-st.markdown(f"### {t('admin_subtitle')}")
+st.title("⚙️ Admin Control Panel")
+st.markdown("### System Administration & Infrastructure Health")
 
 # --- 1. System Health ---
-st.subheader(t("infra_health"))
+st.subheader("🖥️ Infrastructure Health")
 try:
     health_res = api_get("/admin/system_health", auth_required=True)
     if health_res and health_res.status_code == 200:
@@ -45,11 +45,12 @@ except Exception as e:
 st.markdown("---")
 
 # --- 3. Workspace Management ---
-st.subheader(t("workspace_mgmt"))
-st.info(f"Managing workspace for: **{st.session_state.username}**")
+st.subheader("📁 Workspace Management")
+username = st.session_state.get("username", "guest")
+st.info(f"Managing workspace for: **{username}**")
 
-if st.button(t("purge_btn")):
-    confirm = st.checkbox(t("confirm_delete"))
+if st.button("🗑️ Purge My Workspace"):
+    confirm = st.checkbox("I confirm I want to delete all my processed files")
     if confirm:
         try:
             res = api_post("/admin/clear_workspace", auth_required=True)
@@ -64,7 +65,7 @@ if st.button(t("purge_btn")):
 st.markdown("---")
 
 # --- 4. System Logs ---
-st.subheader(t("system_logs"))
+st.subheader("📋 System Logs")
 from datetime import datetime
 logs = [
     {"timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "component": "Backend", "event": "API Server Running", "status": "INFO"},

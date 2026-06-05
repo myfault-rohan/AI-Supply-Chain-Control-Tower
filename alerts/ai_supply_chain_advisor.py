@@ -25,7 +25,8 @@ try:
     from llama_index.vector_stores.chroma import ChromaVectorStore
     from llama_index.llms.anthropic import Anthropic
     _RAG_AVAILABLE = True
-except ImportError:
+except (ImportError, ValueError, OSError) as e:
+    _RAG_AVAILABLE = False
     pass  # RAG will be disabled gracefully
 
 _PYDANTIC_AI_AVAILABLE = False
