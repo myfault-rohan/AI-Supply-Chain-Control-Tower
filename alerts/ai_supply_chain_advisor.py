@@ -43,15 +43,18 @@ try:
         risk_level: str = Field(description="The risk level associated with the current situation (LOW, MEDIUM, HIGH, CRITICAL).")
         affected_products: Optional[List[str]] = Field(description="List of product IDs affected, if any.")
 
-    supply_chain_agent = pydantic_ai.Agent(
-        'anthropic:claude-3-haiku-20240307',
-        result_type=SupplyChainAdvice,
-        system_prompt=(
-            "You are an elite AI Supply Chain Advisor. You analyze supply chain data and provide actionable advice. "
-            "Always respond with structured data containing a summary, action items, risk level, and affected products."
+    try:
+        supply_chain_agent = pydantic_ai.Agent(
+            'anthropic:claude-3-haiku-20240307',
+            result_type=SupplyChainAdvice,
+            system_prompt=(
+                "You are an elite AI Supply Chain Advisor. You analyze supply chain data and provide actionable advice. "
+                "Always respond with structured data containing a summary, action items, risk level, and affected products."
+            )
         )
-    )
-    _PYDANTIC_AI_AVAILABLE = True
+        _PYDANTIC_AI_AVAILABLE = True
+    except (AttributeError, Exception):
+        pass  # pydantic_ai.Agent not available in this version
 except ImportError:
     pass  # PydanticAI will be disabled gracefully
 

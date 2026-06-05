@@ -28,7 +28,31 @@ TRANSLATIONS = {
         "username": "Username",
         "password": "Password",
         "lang_toggle": "🇯🇵 日本語 / 🇬🇧 English",
-        "logout": "Log Out"
+        "logout": "Log Out",
+        # Analytics page
+        "analytics_title": "📈 Supply Chain Analytics",
+        "analytics_subtitle": "Deep-dive into inventory, suppliers, warehouses, and cost trends",
+        "tab_inventory": "📦 Inventory & Demand",
+        "tab_suppliers": "🚢 Suppliers",
+        "tab_warehouses": "🏠 Warehouses",
+        "tab_costs": "💰 Cost Analysis",
+        "inventory_dist": "Inventory Distribution by Product",
+        "supplier_matrix": "Supplier Reliability Matrix",
+        "warehouse_util": "Warehouse Utilisation",
+        "cost_impact": "Cost Impact Analysis",
+        # Risk Map page
+        "risk_map_title": "🌐 Global Risk Map",
+        "risk_map_subtitle": "Real-time geospatial risk visualisation",
+        "regional_nodes": "Regional Supply Chain Nodes",
+        "risk_map_tip": "💡 Tip: Hover over nodes to see detailed risk scores and supplier info",
+        # Admin page (already hardcoded, kept for completeness)
+        "admin_title": "⚙️ Admin Control Panel",
+        "admin_subtitle": "System Administration & Infrastructure Health",
+        "infra_health": "🖥️ Infrastructure Health",
+        "workspace_mgmt": "📁 Workspace Management",
+        "purge_btn": "🗑️ Purge My Workspace",
+        "confirm_delete": "I confirm I want to delete all my processed files",
+        "system_logs": "📋 System Logs",
     },
     "ja": {
         "title": "AIサプライチェーン コントロールタワー",
@@ -57,7 +81,23 @@ TRANSLATIONS = {
         "username": "ユーザー名",
         "password": "パスワード",
         "lang_toggle": "🇬🇧 English / 🇯🇵 日本語",
-        "logout": "ログアウト"
+        "logout": "ログアウト",
+        # Analytics page
+        "analytics_title": "📈 サプライチェーン分析",
+        "analytics_subtitle": "在庫、サプライヤー、倉庫、コストのトレンドを分析",
+        "tab_inventory": "📦 在庫・需要",
+        "tab_suppliers": "🚢 サプライヤー",
+        "tab_warehouses": "🏠 倉庫",
+        "tab_costs": "💰 コスト分析",
+        "inventory_dist": "製品別在庫分布",
+        "supplier_matrix": "サプライヤー信頼性マトリクス",
+        "warehouse_util": "倉庫利用率",
+        "cost_impact": "コスト影響分析",
+        # Risk Map page
+        "risk_map_title": "🌐 グローバルリスクマップ",
+        "risk_map_subtitle": "リアルタイム地理空間リスク可視化",
+        "regional_nodes": "地域サプライチェーンノード",
+        "risk_map_tip": "💡 ヒント：ノードにホバーして詳細なリスクスコアを確認できます",
     }
 }
 
