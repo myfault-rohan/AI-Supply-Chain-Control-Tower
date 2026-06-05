@@ -38,11 +38,52 @@ def main():
     print("  AI SUPPLY CHAIN CONTROL TOWER — SYSTEM SETUP & DEMO LAUNCHER")
     print("=" * 65)
 
+    # Kill any lingering uvicorn / streamlit processes that may be locking the DB
+    print("  Stopping any previously running servers...")
+    # Kill any process on port 8000 (uvicorn backend)
+    try:
+        result = subprocess.run(
+            ["netstat", "-ano"],
+            capture_output=True, text=True
+        )
+        for line in result.stdout.splitlines():
+            if ":8000" in line and "LISTENING" in line:
+                parts = line.strip().split()
+                pid = parts[-1]
+                subprocess.run(["taskkill", "/F", "/PID", pid],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print(f"  Killed process on port 8000 (PID {pid})")
+    except Exception:
+        pass
+
+    # Kill any process on port 8501 (streamlit)
+    try:
+        result = subprocess.run(
+            ["netstat", "-ano"],
+            capture_output=True, text=True
+        )
+        for line in result.stdout.splitlines():
+            if ":8501" in line and "LISTENING" in line:
+                parts = line.strip().split()
+                pid = parts[-1]
+                subprocess.run(["taskkill", "/F", "/PID", pid],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print(f"  Killed process on port 8501 (PID {pid})")
+    except Exception:
+        pass
+
+    time.sleep(2)  # Give OS time to release file handles
+
     # Remove existing database to prevent unique constraint errors on repeated runs
     for db_path in ["dataset/app.db", "app.db"]:
         if os.path.exists(db_path):
-            os.remove(db_path)
-            print(f"  Cleared old database: {db_path}")
+            try:
+                os.remove(db_path)
+                print(f"  Cleared old database: {db_path}")
+            except PermissionError:
+                print(f"  WARNING: Could not delete {db_path} — will use upsert seeding instead.")
+
+
 
     # 1. Generate Synthetic Data
     print("\n[1/7] Generating synthetic supply chain data...")
