@@ -7,13 +7,21 @@ import polars as pl
 import pandas as pd
 import os
 import json
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-# NeuralForecast imports
-from neuralforecast import NeuralForecast
-from neuralforecast.models import LSTM
-from neuralforecast.losses.pytorch import MAE
+# NeuralForecast imports — wrap in try/except for DLL / torch issues on Windows
+try:
+    from neuralforecast import NeuralForecast
+    from neuralforecast.models import LSTM
+    from neuralforecast.losses.pytorch import MAE
+    _NEURALFORECAST_AVAILABLE = True
+except (OSError, ImportError) as e:
+    _NEURALFORECAST_AVAILABLE = False
+    _IMPORT_ERROR = str(e)
+
 
 INPUT_FILE = 'dataset/synthetic/sales.csv'
 OUTPUT_DIR = 'dataset/processed files'
@@ -43,10 +51,17 @@ def main():
     print("=" * 60)
     print("Supply Chain Deep Learning Forecaster (LSTM)")
     print("=" * 60)
-    
+
+    if not _NEURALFORECAST_AVAILABLE:
+        print(f"\n  NeuralForecast / PyTorch not available: {_IMPORT_ERROR}")
+        print("  Common cause: PyTorch CPU-only build not installed.")
+        print("  Fix: pip install torch --index-url https://download.pytorch.org/whl/cpu")
+        print("  LSTM pipeline SKIPPED. All other models are unaffected.")
+        return
+
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     df = load_data(INPUT_FILE)
-    
+
     # Filter for top 5 products to train quickly for demonstration
     top_products = df['unique_id'].value_counts().head(5).index.tolist()
     train_df = df[df['unique_id'].isin(top_products)].copy()

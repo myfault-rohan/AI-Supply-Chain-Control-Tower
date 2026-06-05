@@ -173,6 +173,7 @@ def main():
         subprocess.run([
             sys.executable, "-m", "streamlit", "run", "dashboard/dashboard_app.py",
             "--browser.gatherUsageStats=false",
+            "--server.headless=true",
             "--server.address=127.0.0.1",
             "--server.port=8501"
         ], check=True)

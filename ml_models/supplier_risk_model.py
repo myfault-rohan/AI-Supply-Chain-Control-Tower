@@ -147,22 +147,24 @@ def main():
     plt.savefig(os.path.join(OUTPUT_DIR, 'shap_supplier_risk.png'))
     plt.close()
     
-    # Save model and metrics
+    # Save model — use XGBoost JSON format to avoid binary deprecation warning
+    model.save_model(os.path.join(OUTPUT_DIR, 'supplier_risk_model.json'))
+    # Also save full pipeline (label encoders + feature list) as pickle
     with open(MODEL_FILE, 'wb') as f:
         pickle.dump({
-            'model': model,
             'features': list(X.columns),
             'le_sup': le_sup,
-            'le_prod': le_prod
+            'le_prod': le_prod,
+            'model_path': os.path.join(OUTPUT_DIR, 'supplier_risk_model.json')
         }, f)
-        
+
     with open(METRICS_FILE, 'w') as f:
         json.dump({
             "rmse": rmse,
             "r2": r2,
             "best_params": study.best_params
         }, f, indent=2)
-        
+
     print(f"\nSaved model to {MODEL_FILE}")
     print(f"Saved metrics to {METRICS_FILE}")
     print("=" * 60)

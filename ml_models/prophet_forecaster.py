@@ -125,20 +125,37 @@ def main():
     print("=" * 60)
     print("Prophet Demand Forecasting Pipeline")
     print("=" * 60)
-    
+
+    # Verify Prophet can actually instantiate before spending time loading data.
+    # The stan_backend bug occurs immediately on Windows without a C++ compiler.
+    try:
+        from prophet import Prophet as _TestProphet
+        _test = _TestProphet()
+        del _test
+    except AttributeError as e:
+        print(f"\n  Prophet is not functional on this system: {e}")
+        print("  Reason: Prophet requires pystan which needs a C++ compiler on Windows.")
+        print("  Fix:  pip install pystan==3.9.0  OR  use the Docker setup.")
+        print("  The Prophet pipeline will be SKIPPED. All other models are unaffected.")
+        # Write an empty placeholder so the dashboard doesn't crash looking for this file
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        placeholder = pd.DataFrame(columns=["unique_id", "ds", "yhat", "yhat_lower", "yhat_upper", "product_id"])
+        placeholder.to_csv(OUTPUT_FILE, index=False)
+        print(f"  Placeholder written to {OUTPUT_FILE}")
+        return  # Exit cleanly (not an error)
+    except Exception as e:
+        print(f"  Prophet import error: {e}")
+        return
+
     try:
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         df = load_data(INPUT_FILE)
-        
         predictions_df, global_metrics = train_and_evaluate(df)
-        
         predictions_df.to_csv(OUTPUT_FILE, index=False)
         print(f"\n  Forecast saved to {OUTPUT_FILE}")
-        
         with open(METRICS_FILE, 'w') as f:
             json.dump(global_metrics, f, indent=2)
         print(f"  Metrics saved to {METRICS_FILE}")
-        
     except Exception as e:
         print(f"Error during Prophet pipeline: {e}")
         import traceback
