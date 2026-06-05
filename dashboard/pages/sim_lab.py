@@ -81,7 +81,7 @@ fig_bar.update_yaxes(range=[0, min(100, diff_df["Days Until Stockout"].max() + 5
 st.plotly_chart(fig_bar, use_container_width=True)
 
 total_cost = df_sim["sim_financial_impact"].sum() if "sim_financial_impact" in df_sim else 0
-st.metric("Estimated Financial Impact (USD)", f"${total_cost:,.2f}", delta=f"${total_cost - df_base.get('current_stock', pd.Series([0])).sum()*2:,.2f} vs Base", delta_inverse_color=True)
+st.metric("Estimated Financial Impact (USD)", f"${total_cost:,.2f}", delta=f"${total_cost - df_base.get('current_stock', pd.Series([0])).sum()*2:,.2f} vs Base")
 
 st.markdown("---")
 st.markdown("### 🎲 Monte Carlo Risk Distribution (1000 Iterations)")

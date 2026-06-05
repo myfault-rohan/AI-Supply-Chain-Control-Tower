@@ -20,7 +20,9 @@ DEMO_DIR = os.path.join(DATASET_DIR, "demo_data")
 PROCESSED_DIR = os.path.join(DATASET_DIR, "processed files")
 
 def get_workspace_dir(username):
-    return os.path.join(DATASET_DIR, "workspaces", username)
+    # Fallback to default if username is somehow None
+    uname = username if username else "default"
+    return os.path.join(DATASET_DIR, "workspaces", uname)
 
 def data_lab_page():
     st.title("Data Management Lab 🔍")
