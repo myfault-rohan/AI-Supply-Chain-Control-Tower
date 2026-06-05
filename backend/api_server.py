@@ -8,6 +8,7 @@ import os
 import sys
 import shutil
 import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import List, Dict, Optional
 
@@ -50,6 +51,34 @@ from sqlalchemy.exc import OperationalError
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("api")
 
+# Cache backend imports
+from fastapi_cache.backends.inmemory import InMemoryBackend
+
+
+@asynccontextmanager
+async def lifespan(app):
+    """FastAPI lifespan handler — replaces deprecated @app.on_event('startup')."""
+    # Initialize database
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+
+    # Attempt Redis cache, fall back to in-memory
+    try:
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+        redis = aioredis.from_url(redis_url, encoding="utf8", decode_responses=True)
+        FastAPICache.init(RedisBackend(redis), prefix="supply-chain-cache")
+        logger.info("Redis cache initialized successfully")
+    except Exception as e:
+        logger.warning(f"Redis cache initialization failed, using InMemory cache: {e}")
+        FastAPICache.init(InMemoryBackend(), prefix="supply-chain-cache")
+
+    yield
+    # Shutdown: nothing to clean up for now
+
+
 # FastAPI App
 app = FastAPI(
     title=APP_TITLE,
@@ -61,29 +90,8 @@ app = FastAPI(
     version=APP_VERSION,
     contact={"name": "Supply Chain AI Team", "email": "support@example.com"},
     license_info={"name": "MIT"},
+    lifespan=lifespan,
 )
-
-# Initialize Cache with InMemoryBackend immediately for testing / safety
-from fastapi_cache.backends.inmemory import InMemoryBackend
-FastAPICache.init(InMemoryBackend(), prefix="supply-chain-cache")
-
-@app.on_event("startup")
-async def startup_event():
-    # Pre-seed tables if they don't exist
-    try:
-        init_db()
-        logger.info("Database initialized successfully")
-    except Exception as e:
-        logger.error(f"Database initialization failed: {e}")
-        
-    # Attempt to initialize Redis cache
-    try:
-        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-        redis = aioredis.from_url(redis_url, encoding="utf8", decode_responses=True)
-        FastAPICache.init(RedisBackend(redis), prefix="supply-chain-cache")
-        logger.info("Redis cache initialized successfully")
-    except Exception as e:
-        logger.warning(f"Redis cache initialization failed, using InMemory cache: {e}")
 
 # Rate Limiting
 limiter = Limiter(key_func=get_remote_address)

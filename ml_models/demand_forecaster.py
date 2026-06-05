@@ -25,6 +25,11 @@ from datetime import datetime
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import sys
+try:
+    import torch
+except OSError:
+    sys.modules['torch'] = None
 import shap
 import matplotlib.pyplot as plt
 

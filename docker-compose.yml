@@ -24,7 +24,7 @@ services:
       - ./config.py:/app/config.py
     depends_on:
       - redis
-    command: uvicorn backend.api_server_phase1:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn backend.api_server:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - supply-chain-network
     healthcheck:

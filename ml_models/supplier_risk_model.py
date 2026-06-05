@@ -7,13 +7,18 @@ that predicts shipment delays.
 import polars as pl
 import xgboost as xgb
 import optuna
+import sys
+try:
+    import torch
+except OSError:
+    sys.modules['torch'] = None
 import shap
 import json
 import os
 import pickle
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import root_mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score
 
 INPUT_FILE = 'dataset/synthetic/shipments.csv'
 OUTPUT_DIR = 'dataset/processed files'
@@ -32,7 +37,7 @@ def load_data(filepath):
     
     # Target: Delay days (actual - expected)
     df = df.with_columns(
-        (pl.col("actual_delivery") - pl.col("expected_delivery")).dt.total_days().alias("delay_days")
+        (pl.col("actual_delivery") - pl.col("expected_delivery")).dt.days().alias("delay_days")
     )
     
     # Drop rows with null delay_days (e.g. pending shipments)
@@ -88,7 +93,7 @@ def objective(trial, X_train, y_train, X_valid, y_valid):
     model.fit(X_train, y_train, eval_set=[(X_valid, y_valid)], verbose=False)
     
     preds = model.predict(X_valid)
-    rmse = root_mean_squared_error(y_valid, preds)
+    rmse = mean_squared_error(y_valid, preds) ** 0.5
     return rmse
 
 def main():
@@ -124,7 +129,7 @@ def main():
     model.fit(X_train, y_train)
     
     preds = model.predict(X_test)
-    rmse = root_mean_squared_error(y_test, preds)
+    rmse = mean_squared_error(y_test, preds) ** 0.5
     r2 = r2_score(y_test, preds)
     
     print(f"Final Model Performance on Test Set:")
