@@ -1,0 +1,21 @@
+supplier_id,supplier_name,country,reliability_score,avg_lead_time_days,lead_time_std,defect_rate,on_time_delivery_rate,payment_terms_days,risk_category
+SUP-01,Supplier 1 Ltd,USA,86.8,41,7,0.0661,86.8,60,MEDIUM
+SUP-02,Supplier 2 Ltd,China,97.3,9,10,0.0135,97.3,30,LOW
+SUP-03,Supplier 3 Ltd,USA,73.0,43,2,0.1352,73.0,90,HIGH
+SUP-04,Supplier 4 Ltd,USA,92.7,39,7,0.0365,92.7,45,LOW
+SUP-05,Supplier 5 Ltd,Vietnam,72.0,26,1,0.14,72.0,60,HIGH
+SUP-06,Supplier 6 Ltd,India,93.8,32,6,0.0308,93.8,60,LOW
+SUP-07,Supplier 7 Ltd,Germany,90.5,16,9,0.0474,90.5,45,MEDIUM
+SUP-08,Supplier 8 Ltd,Japan,87.9,35,8,0.0607,87.9,60,MEDIUM
+SUP-09,Supplier 9 Ltd,Japan,93.9,22,6,0.0303,93.9,30,LOW
+SUP-10,Supplier 10 Ltd,India,94.1,22,8,0.0295,94.1,30,LOW
+SUP-11,Supplier 11 Ltd,Japan,91.8,44,7,0.0412,91.8,45,MEDIUM
+SUP-12,Supplier 12 Ltd,USA,70.8,16,8,0.1458,70.8,30,HIGH
+SUP-13,Supplier 13 Ltd,USA,80.3,26,5,0.0986,80.3,90,MEDIUM
+SUP-14,Supplier 14 Ltd,USA,90.3,40,1,0.0483,90.3,90,MEDIUM
+SUP-15,Supplier 15 Ltd,India,97.5,20,7,0.0125,97.5,60,LOW
+SUP-16,Supplier 16 Ltd,China,86.1,35,8,0.0695,86.1,60,MEDIUM
+SUP-17,Supplier 17 Ltd,India,93.0,23,4,0.035,93.0,60,LOW
+SUP-18,Supplier 18 Ltd,USA,90.1,42,6,0.0497,90.1,60,MEDIUM
+SUP-19,Supplier 19 Ltd,USA,86.1,32,9,0.0697,86.1,45,MEDIUM
+SUP-20,Supplier 20 Ltd,Germany,80.2,22,5,0.099,80.2,45,MEDIUM

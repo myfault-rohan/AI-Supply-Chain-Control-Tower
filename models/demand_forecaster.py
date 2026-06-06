@@ -19,7 +19,12 @@ warnings.filterwarnings("ignore")
 import xgboost as xgb
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-import shap
+try:
+    import shap
+    SHAP_AVAILABLE = True
+except (ImportError, OSError):
+    SHAP_AVAILABLE = False
+    print("  [WARN] SHAP unavailable (torch DLL issue) — skipping feature importance")
 import joblib
 import mlflow
 import mlflow.xgboost
@@ -98,6 +103,14 @@ def train_xgboost(df):
 
 
 def compute_shap(model, X_sample):
+    if not SHAP_AVAILABLE:
+        print("  [SKIP] SHAP not available — saving XGBoost native importance instead")
+        importance = pd.DataFrame({
+            "feature": X_sample.columns,
+            "mean_abs_shap": model.feature_importances_
+        }).sort_values("mean_abs_shap", ascending=False)
+        importance.to_csv(os.path.join(MODELS_DIR, "demand_shap_importance.csv"), index=False)
+        return importance
     print("\n  Computing SHAP values...")
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X_sample)

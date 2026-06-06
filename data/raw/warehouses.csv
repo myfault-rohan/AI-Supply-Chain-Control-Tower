@@ -1,0 +1,6 @@
+warehouse_id,warehouse_name,location,capacity,fixed_cost_monthly
+WH-01,Distribution Center 1,Kolkata,15968,79986
+WH-02,Distribution Center 2,Bangalore,8571,171905
+WH-03,Distribution Center 3,Chennai,17564,146703
+WH-04,Distribution Center 4,Delhi,14926,80024
+WH-05,Distribution Center 5,Delhi,10096,78337

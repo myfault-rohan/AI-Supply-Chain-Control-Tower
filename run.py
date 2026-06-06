@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AI Supply Chain Control Tower — One-Command Runner
+AI Supply Chain Control Tower -- One-Command Runner
 ===================================================
 Usage:
     python run.py                  # Run full pipeline (default: all)
@@ -10,6 +10,11 @@ Usage:
     python run.py --mode dashboard # Launch Streamlit dashboard
     python run.py --mode all       # Full end-to-end pipeline
 """
+
+import sys
+# Force UTF-8 output so emoji/special chars work on Windows cp1252 terminals
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 import argparse
 import subprocess
@@ -27,9 +32,9 @@ def run(cmd, label):
     print(f"{'='*60}")
     result = subprocess.run([PYTHON] + cmd, cwd=ROOT)
     if result.returncode != 0:
-        print(f"  ❌ FAILED: {label}")
+        print(f"  [FAILED] {label}")
         sys.exit(1)
-    print(f"  ✅ Done: {label}")
+    print(f"  [OK] {label}")
 
 
 def main():

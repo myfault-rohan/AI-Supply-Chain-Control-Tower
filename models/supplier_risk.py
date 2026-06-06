@@ -16,7 +16,11 @@ warnings.filterwarnings("ignore")
 import xgboost as xgb
 import optuna
 optuna.logging.set_verbosity(optuna.logging.WARNING)
-import shap
+try:
+    import shap
+    SHAP_AVAILABLE = True
+except (ImportError, OSError):
+    SHAP_AVAILABLE = False
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.metrics import mean_absolute_error, r2_score
 import joblib
@@ -102,26 +106,32 @@ def main():
     )
 
     # ── SHAP Analysis ─────────────────────────────────────────────────────────
-    print("\n  Computing SHAP values...")
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X)
-
-    shap_importance = pd.DataFrame({
-        "feature": X.columns,
-        "mean_abs_shap": np.abs(shap_values).mean(axis=0)
-    }).sort_values("mean_abs_shap", ascending=False)
+    if SHAP_AVAILABLE:
+        print("\n  Computing SHAP values...")
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(X)
+        shap_importance = pd.DataFrame({
+            "feature": X.columns,
+            "mean_abs_shap": np.abs(shap_values).mean(axis=0)
+        }).sort_values("mean_abs_shap", ascending=False)
+        shap_df = pd.DataFrame(shap_values, columns=X.columns)
+        shap_df.insert(0, "supplier_id", df["supplier_id"].values)
+        shap_df.to_csv(os.path.join(MODELS_DIR, "supplier_shap_values.csv"), index=False)
+    else:
+        print("\n  [SKIP] SHAP unavailable — using XGBoost native importance")
+        shap_importance = pd.DataFrame({
+            "feature": X.columns,
+            "mean_abs_shap": model.feature_importances_
+        }).sort_values("mean_abs_shap", ascending=False)
+        # Save empty shap values placeholder
+        pd.DataFrame(columns=["supplier_id"] + list(X.columns)).to_csv(
+            os.path.join(MODELS_DIR, "supplier_shap_values.csv"), index=False)
 
     shap_importance.to_csv(os.path.join(MODELS_DIR, "supplier_shap_importance.csv"), index=False)
-
     print("  Top features driving supplier risk:")
     for _, row in shap_importance.iterrows():
-        bar = "█" * int(row["mean_abs_shap"] * 100 / shap_importance["mean_abs_shap"].max() * 20)
+        bar = "#" * int(row["mean_abs_shap"] * 100 / shap_importance["mean_abs_shap"].max() * 20)
         print(f"    {row['feature']:<30} {bar:<20} {row['mean_abs_shap']:.4f}")
-
-    # Per-supplier SHAP breakdown
-    shap_df = pd.DataFrame(shap_values, columns=X.columns)
-    shap_df.insert(0, "supplier_id", df["supplier_id"].values)
-    shap_df.to_csv(os.path.join(MODELS_DIR, "supplier_shap_values.csv"), index=False)
 
     # ── Save Results ──────────────────────────────────────────────────────────
     results = df[["supplier_id", "on_time_rate", "avg_delay_days",
