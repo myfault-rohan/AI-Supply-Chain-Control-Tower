@@ -1,11 +1,15 @@
-[server]
-maxUploadSize = 50
-
 [theme]
-base="dark"
-primaryColor="#00d4ff"
-backgroundColor="rgba(10, 11, 16, 1)"
-secondaryBackgroundColor="#1a1c24"
-textColor="#ffffff"
-font="sans serif"
+base = "dark"
+primaryColor = "#64b5f6"
+backgroundColor = "#0a0e1a"
+secondaryBackgroundColor = "#141829"
+textColor = "#ccd6f6"
+font = "sans serif"
 
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+gatherUsageStats = false
