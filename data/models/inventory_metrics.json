@@ -1,9 +1,0 @@
-{
-  "total_products": 100,
-  "total_current_cost": 9952398.94,
-  "total_optimal_cost": 2148603.68,
-  "total_savings": 7803795.27,
-  "savings_pct": 78.41,
-  "avg_eoq": 557.6,
-  "avg_safety_stock_95pct": 70.5
-}

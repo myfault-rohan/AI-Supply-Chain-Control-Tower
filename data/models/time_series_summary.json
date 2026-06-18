@@ -1,8 +1,0 @@
-{
-  "n_products": 10,
-  "avg_mape": 73.789,
-  "avg_mae": 33.4656,
-  "avg_rmse": 38.7207,
-  "model": "Holt Double Exp Smoothing",
-  "forecast_horizon_days": 30
-}

@@ -42,3 +42,9 @@ dataset/stream_*.csv
 !dataset/demo_data/
 *.crc
 lightning_logs/
+
+# Olist pipeline outputs (too large for git)
+data/raw/
+data/processed/
+data/models/
+
