@@ -1,0 +1,11 @@
+product_id,category,model,is_stationary,aic,mae,rmse,mape
+PROD-0031,Electronics,Holt_DoubleES,,,49.29,55.011,185.88
+PROD-0056,Electronics,Holt_DoubleES,,,24.649,28.643,93.19
+PROD-0067,Clothing,Holt_DoubleES,,,26.784,37.083,37.26
+PROD-0037,Clothing,Holt_DoubleES,,,25.626,32.659,57.9
+PROD-0098,Food,Holt_DoubleES,,,87.538,97.62,91.3
+PROD-0008,Food,Holt_DoubleES,,,77.857,86.328,77.83
+PROD-0059,Industrial,Holt_DoubleES,,,8.573,10.393,47.91
+PROD-0039,Industrial,Holt_DoubleES,,,7.014,8.659,39.34
+PROD-0075,Pharmaceuticals,Holt_DoubleES,,,15.866,17.938,63.07
+PROD-0055,Pharmaceuticals,Holt_DoubleES,,,11.459,12.873,44.21

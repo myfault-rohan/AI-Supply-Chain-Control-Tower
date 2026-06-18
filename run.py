@@ -60,7 +60,15 @@ def main():
         run(["models/anomaly_detector.py"],     "3b/4 Ensemble Anomaly Detection (ECOD + IForest + LOF)")
         run(["models/supplier_risk.py"],        "3c/4 Supplier Risk Model (Optuna + XGBoost + SHAP)")
         run(["models/inventory_optimizer.py"],  "3d/4 Inventory Optimization (EOQ + Safety Stock)")
-        run(["models/time_series.py"],          "3e/4 Time-Series Forecasting (ARIMA/SARIMAX)")
+        # Time-series is supplementary — soft failure allowed
+        print(f"\n{'='*60}")
+        print(f"  3e/4 Time-Series Forecasting (SARIMAX / Holt ES)")
+        print(f"{'='*60}")
+        result = subprocess.run([PYTHON, "models/time_series.py"], cwd=ROOT)
+        if result.returncode != 0:
+            print("  [WARN] Time-series step failed (optional) — skipping")
+        else:
+            print("  [OK] 3e/4 Time-Series Forecasting")
 
     if args.mode in ("dashboard", "all"):
         elapsed = time.time() - start

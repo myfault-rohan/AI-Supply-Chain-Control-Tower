@@ -1,0 +1,14 @@
+feature,mean_abs_shap
+roll_7_mean,0.6999791
+roll_30_mean,0.092830144
+roll_90_mean,0.08601071
+month,0.024841122
+roll_7_std,0.016430866
+mom_change,0.0116228005
+is_month_end,0.010147668
+is_weekend,0.010144599
+lag_7,0.00995536
+quarter,0.009925844
+lag_14,0.00957796
+lag_30,0.009418278
+day_of_week,0.009115505
